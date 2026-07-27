@@ -21,28 +21,70 @@ function aiCountForSelectedRace() {
     return 2
 }
 
-function createAIRacerImage(color: number) {
-    // Copying the equipped player body gives opponents the same authored car
-    // silhouette without introducing another set of placeholder assets.
-    let racerImage = player.image.clone()
-    racerImage.replace(2, color)
-    racerImage.replace(4, color)
-    return racerImage
+function aiBodyImages() {
+    if (selectedRace == RaceDifficulty.Expert) {
+        return carBody3Images
+    } else if (selectedRace == RaceDifficulty.Intermediate) {
+        return carBody2Images
+    }
+    return carBody1Images
+}
+
+function createAIRacerImages() {
+    let sourceImages = aiBodyImages()
+    let racerImages: Image[] = []
+    let colors = [3, 4, 5, 7, 9, 11, 13, 14]
+    let firstColorIndex = randint(0, colors.length - 1)
+    let secondColorIndex = (firstColorIndex + randint(1, colors.length - 1)) % colors.length
+
+    for (let source of sourceImages) {
+        let racerImage = source.clone()
+
+        if (selectedRace == RaceDifficulty.Expert) {
+            racerImage.replace(2, colors[firstColorIndex])
+        } else if (selectedRace == RaceDifficulty.Intermediate) {
+            racerImage.replace(10, colors[firstColorIndex])
+            racerImage.replace(12, colors[secondColorIndex])
+        } else {
+            racerImage.replace(8, colors[firstColorIndex])
+            racerImage.replace(6, colors[secondColorIndex])
+        }
+
+        racerImages.push(racerImage)
+    }
+
+    return racerImages
+}
+
+function updateAIRacerImage(racer: Sprite) {
+    let direction = CarImageDirection.Up
+
+    if (Math.abs(racer.vx) > Math.abs(racer.vy)) {
+        direction = racer.vx < 0 ? CarImageDirection.Left : CarImageDirection.Right
+    } else {
+        direction = racer.vy < 0 ? CarImageDirection.Up : CarImageDirection.Down
+    }
+
+    if (direction != racer.data.imageDirection) {
+        let racerImages: Image[] = racer.data.images
+        racer.data.imageDirection = direction
+        racer.setImage(racerImages[direction])
+    }
 }
 
 function createAIRacers() {
     let count = aiCountForSelectedRace()
 
     for (let index = 0; index < count; index++) {
-        let racer = sprites.create(
-            createAIRacerImage(3 + index * 2),
-            SpriteKind.AIRacer
-        )
+        let racerImages = createAIRacerImages()
+        let racer = sprites.create(racerImages[CarImageDirection.Right], SpriteKind.AIRacer)
 
         racer.data.maximumSpeed = aiSpeedForSelectedRace()
         racer.data.waypoint = 0
         racer.data.checkpointArmed = false
         racer.data.laps = 0
+        racer.data.images = racerImages
+        racer.data.imageDirection = CarImageDirection.Right
 
         // Stagger opponents behind and across the starting lane so none begin
         // overlapping the player.
@@ -77,6 +119,7 @@ function updateAIRacer(racer: Sprite, deltaTime: number) {
 
     racer.vx += (desiredVX - racer.vx) * steering
     racer.vy += (desiredVY - racer.vy) * steering
+    updateAIRacerImage(racer)
 }
 
 function startAIRaceSystems() {

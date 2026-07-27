@@ -50,7 +50,7 @@ function damagePlayerCar(amount: number) {
     playerRaceHealth = Math.max(0, playerRaceHealth - amount)
     playerHealthBar.value = playerRaceHealth
 
-    if (playerRaceHealth == 0) {
+    if (playerRaceHealth <= 0) {
         playerCarWrecked = true
         player.sayText("WRECKED!", 1000, false)
         completeCurrentRace(false)

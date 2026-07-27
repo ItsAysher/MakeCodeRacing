@@ -75,7 +75,7 @@ function updateRaceMinimap() {
     }
 
     let map = minimap.minimap(MinimapScale.Eighth, 1, 1)
-    minimap.includeSprite(map, player)
+    minimap.includeSprite(map, playerCarVisual)
 
     if (!raceMinimap) {
         raceMinimap = sprites.create(minimap.getImage(map), SpriteKind.MinimapHud)

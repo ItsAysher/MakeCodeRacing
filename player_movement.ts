@@ -9,70 +9,24 @@ enum CarImageDirection {
     Right
 }
 
-// Only the upward image for each body needs to be drawn. The other directions
-// are generated once by rotating it, keeping all four views consistent.
-let carBody1Up = img`
-    . . . . 2 2 2 . . . .
-    . . . 2 4 2 4 2 . . .
-    . . 2 2 4 2 4 2 2 . .
-    . . 2 2 2 2 2 2 2 . .
-    . 1 2 2 c c c 2 2 1 .
-    . 1 2 2 c c c 2 2 1 .
-    . . 2 2 2 2 2 2 2 . .
-    . . 2 2 2 2 2 2 2 . .
-    . 1 2 2 2 2 2 2 2 1 .
-    . 1 2 2 2 2 2 2 2 1 .
-    . . . 2 2 2 2 2 . . .
-    . . . 2 . . . 2 . . .
-`
-
-let carBody2Up = img`
-    . . . . 8 8 8 . . . .
-    . . . 8 9 8 9 8 . . .
-    . . 8 8 9 8 9 8 8 . .
-    . 8 8 8 8 8 8 8 8 8 .
-    1 8 8 6 6 6 6 6 8 8 1
-    1 8 8 6 6 6 6 6 8 8 1
-    . 8 8 8 8 8 8 8 8 8 .
-    . 8 8 8 8 8 8 8 8 8 .
-    1 8 8 8 8 8 8 8 8 8 1
-    1 8 8 8 8 8 8 8 8 8 1
-    . . 8 8 8 8 8 8 8 . .
-    . . 8 8 . . . 8 8 . .
-`
-
-let carBody3Up = img`
-    . . . . 5 5 5 . . . .
-    . . . 5 4 5 4 5 . . .
-    . . 5 5 4 5 4 5 5 . .
-    . 5 5 5 5 5 5 5 5 5 .
-    1 5 5 d d d d d 5 5 1
-    1 5 5 d d d d d 5 5 1
-    . 5 5 5 5 5 5 5 5 5 .
-    . 5 5 5 5 5 5 5 5 5 .
-    1 5 5 5 5 5 5 5 5 5 1
-    1 5 5 5 5 5 5 5 5 5 1
-    . 5 5 5 5 5 5 5 5 5 .
-    . 5 5 . . . . . 5 5 .
-`
-
+// Authored body assets are ordered up, down, left, right.
 let carBody1Images = [
-    carBody1Up,
-    carBody1Up.rotated(180),
-    carBody1Up.rotated(270),
-    carBody1Up.rotated(90)
+    assets.image`body1Up`,
+    assets.image`body1Down`,
+    assets.image`body1Left`,
+    assets.image`body1Right`
 ]
 let carBody2Images = [
-    carBody2Up,
-    carBody2Up.rotated(180),
-    carBody2Up.rotated(270),
-    carBody2Up.rotated(90)
+    assets.image`body2Up`,
+    assets.image`body2Down`,
+    assets.image`body2Left`,
+    assets.image`body2Right`
 ]
 let carBody3Images = [
-    carBody3Up,
-    carBody3Up.rotated(180),
-    carBody3Up.rotated(270),
-    carBody3Up.rotated(90)
+    assets.image`body3Up`,
+    assets.image`body3Down`,
+    assets.image`body3Left`,
+    assets.image`body3Right`
 ]
 
 let allCarBodyImages = [
@@ -85,6 +39,22 @@ let currentCarImageDirection = CarImageDirection.Up
 let currentCarBodyIndex = -1
 let playerMaximumSpeed = 55
 let playerReversing = false
+let playerCarVisual: Sprite = null
+
+// The authored car is 24 pixels long, but a race lane is only 16 pixels wide.
+// This hidden square is the physical car; playerCarVisual draws the full car.
+let playerCollisionImage = img`
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+    1 1 1 1 1 1 1 1 1 1
+`
 
 // Call this after movement is updated. It picks the equipped body's image set
 // and makes the car face its strongest velocity axis.
@@ -93,6 +63,15 @@ function updatePlayerCarImage() {
     if (bodyIndex != currentCarBodyIndex) {
         currentCarBodyIndex = bodyIndex
         activeCarBodyImages = allCarBodyImages[bodyIndex]
+    }
+
+    if (!playerCarVisual) {
+        playerCarVisual = sprites.create(
+            activeCarBodyImages[currentCarImageDirection],
+            SpriteKind.PlayerVisual
+        )
+        playerCarVisual.setFlag(SpriteFlag.Ghost, true)
+        playerCarVisual.setFlag(SpriteFlag.Invisible, true)
     }
 
     // Reversing changes velocity but not the direction the car is facing.
@@ -112,7 +91,9 @@ function updatePlayerCarImage() {
         }
     }
 
-    player.setImage(activeCarBodyImages[currentCarImageDirection])
+    playerCarVisual.setImage(activeCarBodyImages[currentCarImageDirection])
+    playerCarVisual.setPosition(player.x, player.y)
+    playerCarVisual.z = player.z + 1
 }
 
 function playerCarFacingX() {
@@ -138,13 +119,19 @@ function startPlayerMovement() {
     player.vy = 0
     playerReversing = false
     playerMaximumSpeed = Math.max(55, speed * 3)
+    player.setImage(playerCollisionImage)
+    player.setFlag(SpriteFlag.Invisible, true)
     updatePlayerCarImage()
+    playerCarVisual.setFlag(SpriteFlag.Invisible, false)
 }
 
 function stopPlayerMovement() {
     player.vx = 0
     player.vy = 0
     playerReversing = false
+    if (playerCarVisual) {
+        playerCarVisual.setFlag(SpriteFlag.Invisible, true)
+    }
 }
 
 function updatePlayerMovement() {

@@ -4,4 +4,5 @@ namespace SpriteKind {
     export let FinishLine = SpriteKind.create()
     export let MinimapHud = SpriteKind.create()
     export let AIRacer = SpriteKind.create()
+    export let PlayerVisual = SpriteKind.create()
 }
