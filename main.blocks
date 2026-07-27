@@ -1,0 +1,18 @@
+<xml xmlns="https://developers.google.com/blockly/xml"><variables><variable id="2^:AVT{8_S?0~^9k78L]">player</variable><variable type="KIND_SpriteKind" id="rr]ws1+]M/,G2igC3ty/">Player</variable><variable type="KIND_SpriteKind" id="bh7=o}IG8`wxIx=e]y[_">Projectile</variable><variable type="KIND_SpriteKind" id="N)DxYqM}h*j%rO+Gm%`s">Food</variable><variable type="KIND_SpriteKind" id="8bA-0lhob)h}0ACn2?Lm">Enemy</variable></variables><block type="pxt-on-start" x="20" y="20"><statement name="HANDLER"><block type="typescript_statement"><mutation xmlns="http://www.w3.org/1999/xhtml" line0="namespace SpriteKind {" line1="    export let Car = SpriteKind.create()" line2="    export let FinishLine = SpriteKind.create()" line3="}" numlines="4"></mutation><next><block type="typescript_statement"><mutation xmlns="http://www.w3.org/1999/xhtml" line0="let engine;" numlines="1" declaredvars="engine"></mutation><next><block type="typescript_statement"><mutation xmlns="http://www.w3.org/1999/xhtml" line0="let wheels;" numlines="1" declaredvars="wheels"></mutation><next><block type="typescript_statement"><mutation xmlns="http://www.w3.org/1999/xhtml" line0="let body;" numlines="1" declaredvars="body"></mutation><next><block type="typescript_statement"><mutation xmlns="http://www.w3.org/1999/xhtml" line0="let brakes;" numlines="1" declaredvars="brakes"></mutation><next><block type="typescript_statement"><mutation xmlns="http://www.w3.org/1999/xhtml" line0="let cash;" numlines="1" declaredvars="cash"></mutation><next><block type="variables_set"><field name="VAR" id="2^:AVT{8_S?0~^9k78L]">player</field><value name="VALUE"><shadow type="math_number"><field name="NUM">0</field></shadow><block type="spritescreate"><value name="img"><shadow type="screen_image_picker"><field name="img">img`
+. . . . . . . . . . . . . . . . 
+. . . . 2 2 2 2 2 2 2 2 . . . . 
+. . . 2 4 2 2 2 2 2 2 c 2 . . . 
+. . 2 c 4 2 2 2 2 2 2 c c 2 . . 
+. 2 c c 4 4 4 4 4 4 2 c c 4 2 d 
+. 2 c 2 e e e e e e e b c 4 2 2 
+. 2 2 e b b e b b b e e b 4 2 2 
+. 2 e b b b e b b b b e 2 2 2 2 
+. e e 2 2 2 e 2 2 2 2 2 e 2 2 2 
+. e e e e e e f e e e f e 2 d d 
+. e e e e e e f e e f e e e 2 d 
+. e e e e e e f f f e e e e e e 
+. e f f f f e e e e f f f e e e 
+. . f f f f f e e f f f f f e . 
+. . . f f f . . . . f f f f . . 
+. . . . . . . . . . . . . . . . 
+`</field><data>{"commentRefs":[],"fieldData":{"img":null}}</data></shadow></value><value name="kind"><shadow type="spritekind"><field name="MEMBER">Player</field></shadow></value></block></value></block></next></block></next></block></next></block></next></block></next></block></next></block></statement></block></xml>
