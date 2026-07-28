@@ -53,22 +53,6 @@ function configureRaceDifficulty() {
 }
 
 function configureRaceBackground() {
-    // Clear any scroller left over from another scene. The Beginner track
-    // covers the full play area and intentionally has no separate background.
-    scroller.setLayerImage(scroller.BackgroundLayer.Layer0, image.create(1, 1))
-    scroller.scrollBackgroundWithSpeed(0, 0)
-
-    if (selectedRace == RaceDifficulty.Beginner) {
-        scene.setBackgroundColor(7)
-        return
-    }
-
-    // Intermediate and Expert background assets have not been created yet.
-    // Configure their scrolling layer here once those assets are available:
-    //
-    // scroller.setLayerImage(scroller.BackgroundLayer.Layer0, assets.image`race-background`)
-    // scroller.scrollBackgroundWithCamera(scroller.CameraScrollMode.BothDirections)
-    // scroller.setCameraScrollingMultipliers(0.35, 0.35)
     scene.setBackgroundColor(7)
 }
 
@@ -143,8 +127,6 @@ function startFreeRoam() {
     checkpointArmed = false
 
     loadSelectedFreeRoamMap()
-    scroller.setLayerImage(scroller.BackgroundLayer.Layer0, image.create(1, 1))
-    scroller.scrollBackgroundWithSpeed(0, 0)
     scene.setBackgroundColor(7)
 
     player.setFlag(SpriteFlag.Invisible, false)
@@ -200,8 +182,6 @@ function leaveRaceForGarage() {
     scene.setTileMapLevel(null)
     clearFreeRoamMapState()
     scene.centerCameraAt(80, 60)
-    scroller.setLayerImage(scroller.BackgroundLayer.Layer0, image.create(1, 1))
-    scroller.scrollBackgroundWithSpeed(0, 0)
     info.stopCountdown()
     info.setScore(0)
     info.showScore(false)
