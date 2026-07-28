@@ -37,7 +37,6 @@ let allCarBodyImages = [
 let activeCarBodyImages = carBody1Images
 let currentCarImageDirection = CarImageDirection.Up
 let currentCarBodyIndex = -1
-let playerMaximumSpeed = 55
 let playerReversing = false
 let playerCarVisual: Sprite = null
 
@@ -59,10 +58,9 @@ let playerCollisionImage = img`
 // Call this after movement is updated. It picks the equipped body's image set
 // and makes the car face its strongest velocity axis.
 function updatePlayerCarImage() {
-    let bodyIndex = getPartIndex(body, carBodies)
-    if (bodyIndex != currentCarBodyIndex) {
-        currentCarBodyIndex = bodyIndex
-        activeCarBodyImages = allCarBodyImages[bodyIndex]
+    if (equippedBodyTier != currentCarBodyIndex) {
+        currentCarBodyIndex = equippedBodyTier
+        activeCarBodyImages = allCarBodyImages[equippedBodyTier]
     }
 
     if (!playerCarVisual) {
@@ -118,7 +116,6 @@ function startPlayerMovement() {
     player.vx = 0
     player.vy = 0
     playerReversing = false
-    playerMaximumSpeed = Math.max(55, speed * 3)
     player.setImage(playerCollisionImage)
     player.setFlag(SpriteFlag.Invisible, true)
     updatePlayerCarImage()
@@ -144,7 +141,7 @@ function updatePlayerMovement() {
 
     // A brakes along the current direction of travel.
     if (controller.A.isPressed()) {
-        let braking = (40 + brakeSpeed * 2) * deltaTime
+        let braking = playerBrakingDeceleration * deltaTime
         let newSpeed = Math.max(0, currentSpeed - braking)
 
         if (currentSpeed > 0) {
@@ -183,7 +180,7 @@ function updatePlayerMovement() {
         // Forward input first brakes away the remaining reverse speed, then
         // shifts back into forward movement near a stop.
         if (facingAlignment > 0.5) {
-            let reverseBraking = (40 + brakeSpeed * 2) * deltaTime
+            let reverseBraking = playerBrakingDeceleration * deltaTime
             let newSpeed = Math.max(0, currentSpeed - reverseBraking)
 
             if (currentSpeed > 0) {
@@ -202,11 +199,9 @@ function updatePlayerMovement() {
         // Reverse throttle is available only behind the car and is capped
         // below forward speed.
         if (facingAlignment < -0.5) {
-            let reverseMaximumSpeed = Math.min(40, playerMaximumSpeed * 0.45)
-            let reverseAcceleration = 14 + acceleration * 5
             currentSpeed = Math.min(
-                reverseMaximumSpeed,
-                currentSpeed + reverseAcceleration * deltaTime
+                playerReverseMaximumSpeed,
+                currentSpeed + playerReverseAcceleration * deltaTime
             )
             player.vx = inputX * currentSpeed
             player.vy = inputY * currentSpeed
@@ -228,7 +223,7 @@ function updatePlayerMovement() {
     // Opposite input behaves like a brake. Reverse engages only near a stop,
     // preventing velocity from instantly flipping direction.
     if (movementAlignment < -0.5) {
-        let oppositeBraking = (40 + brakeSpeed * 2) * deltaTime
+        let oppositeBraking = playerBrakingDeceleration * deltaTime
         let newSpeed = Math.max(0, currentSpeed - oppositeBraking)
 
         if (currentSpeed > 0) {
@@ -259,7 +254,7 @@ function updatePlayerMovement() {
 
     // Blend the current heading toward the requested heading. Acceleration
     // upgrades also improve response, while speed still produces wider turns.
-    let turnRate = (4.5 + acceleration * 0.45) * (1 - speedRatio * 0.45)
+    let turnRate = playerTurnRateAtSpeed(speedRatio)
     let turnBlend = Math.min(1, turnRate * deltaTime)
     directionX = directionX * (1 - turnBlend) + inputX * turnBlend
     directionY = directionY * (1 - turnBlend) + inputY * turnBlend
@@ -274,10 +269,9 @@ function updatePlayerMovement() {
     // acceleration sideways. Reversing direction naturally costs the most.
     let turnSeverity = (1 - alignment) / 2
     let corneringDrag = turnSeverity * (4 + speedRatio * 8)
-    let driveAcceleration = 24 + acceleration * 8
     currentSpeed = Math.min(
         playerMaximumSpeed,
-        Math.max(0, currentSpeed + (driveAcceleration - corneringDrag) * deltaTime)
+        Math.max(0, currentSpeed + (playerDriveAcceleration - corneringDrag) * deltaTime)
     )
 
     player.vx = directionX * currentSpeed

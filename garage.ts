@@ -72,51 +72,51 @@ function unlockPart(partName: string, partIndex: number, unlockedParts: boolean[
 
 function chooseEngine() {
     setGarageBackground("engine")
-    let selectedPart = choosePartIndex(engines, engineUnlocked)
+    let selectedPart = choosePartIndex(engineNames, engineUnlocked)
 
-    if (selectedPart >= 0 && unlockPart(engines[selectedPart], selectedPart, engineUnlocked)) {
-        engine = engines[selectedPart]
-        updatePlayerStats()
+    if (selectedPart >= 0 && unlockPart(engineNames[selectedPart], selectedPart, engineUnlocked)) {
+        equippedEngineTier = selectedPart
+        recalculatePlayerStats()
     }
 }
 
 function chooseWheels() {
     setGarageBackground("wheels")
-    let selectedPart = choosePartIndex(wheelTypes, wheelsUnlocked)
+    let selectedPart = choosePartIndex(wheelNames, wheelsUnlocked)
 
-    if (selectedPart >= 0 && unlockPart(wheelTypes[selectedPart], selectedPart, wheelsUnlocked)) {
-        wheels = wheelTypes[selectedPart]
-        updatePlayerStats()
+    if (selectedPart >= 0 && unlockPart(wheelNames[selectedPart], selectedPart, wheelsUnlocked)) {
+        equippedWheelTier = selectedPart
+        recalculatePlayerStats()
     }
 }
 
 function chooseBody() {
     setGarageBackground("body")
-    let selectedPart = choosePartIndex(carBodies, bodyUnlocked)
+    let selectedPart = choosePartIndex(bodyNames, bodyUnlocked)
 
-    if (selectedPart >= 0 && unlockPart(carBodies[selectedPart], selectedPart, bodyUnlocked)) {
-        body = carBodies[selectedPart]
-        updatePlayerStats()
+    if (selectedPart >= 0 && unlockPart(bodyNames[selectedPart], selectedPart, bodyUnlocked)) {
+        equippedBodyTier = selectedPart
+        recalculatePlayerStats()
     }
 }
 
 function chooseBrakes() {
     setGarageBackground("brakes")
-    let selectedPart = choosePartIndex(brakeTypes, brakesUnlocked)
+    let selectedPart = choosePartIndex(brakeNames, brakesUnlocked)
 
-    if (selectedPart >= 0 && unlockPart(brakeTypes[selectedPart], selectedPart, brakesUnlocked)) {
-        brakes = brakeTypes[selectedPart]
-        updatePlayerStats()
+    if (selectedPart >= 0 && unlockPart(brakeNames[selectedPart], selectedPart, brakesUnlocked)) {
+        equippedBrakeTier = selectedPart
+        recalculatePlayerStats()
     }
 }
 
 function showCarStats() {
     story.printCharacterText(
-        "Speed: " + speed +
-        "\nAcceleration: " + acceleration +
-        "\nBraking: " + brakeSpeed +
-        "\nDurability: " + durability +
-        "\nEfficiency: " + efficiency + "%" +
+        "Speed: " + playerTopSpeedRating +
+        "\nAcceleration: " + playerAccelerationRating +
+        "\nBraking: " + playerBrakingRating +
+        "\nDurability: " + playerMaximumDurability +
+        "\nEfficiency: " + playerEfficiencyPercent + "%" +
         "\nCash: $" + cash,
     )
 }
@@ -126,9 +126,10 @@ function showMoreGarageOptions() {
 
     while (!leaveMoreMenu && garageIsOpen) {
         setGarageBackground("main")
-        story.showPlayerChoices("Brakes: " + brakes, "View Car Stats", "Start Race", "Back")
+        let brakeName = brakeNames[equippedBrakeTier]
+        story.showPlayerChoices("Brakes: " + brakeName, "View Car Stats", "Start Race", "Back")
 
-        if (story.checkLastAnswer("Brakes: " + brakes)) {
+        if (story.checkLastAnswer("Brakes: " + brakeName)) {
             chooseBrakes()
         } else if (story.checkLastAnswer("View Car Stats")) {
             showCarStats()
@@ -218,18 +219,21 @@ function showGarage() {
 
     while (garageIsOpen) {
         setGarageBackground("main")
+        let engineName = engineNames[equippedEngineTier]
+        let wheelName = wheelNames[equippedWheelTier]
+        let bodyName = bodyNames[equippedBodyTier]
         story.showPlayerChoices(
-            "Engine: " + engine,
-            "Wheels: " + wheels,
-            "Body: " + body,
+            "Engine: " + engineName,
+            "Wheels: " + wheelName,
+            "Body: " + bodyName,
             "More"
         )
 
-        if (story.checkLastAnswer("Engine: " + engine)) {
+        if (story.checkLastAnswer("Engine: " + engineName)) {
             chooseEngine()
-        } else if (story.checkLastAnswer("Wheels: " + wheels)) {
+        } else if (story.checkLastAnswer("Wheels: " + wheelName)) {
             chooseWheels()
-        } else if (story.checkLastAnswer("Body: " + body)) {
+        } else if (story.checkLastAnswer("Body: " + bodyName)) {
             chooseBody()
         } else {
             showMoreGarageOptions()

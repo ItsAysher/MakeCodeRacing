@@ -3,7 +3,7 @@ let cash = 0
 let wins = 10
 let racesRaced = 0
 
-updatePlayerStats()
+recalculatePlayerStats()
 
 let player = sprites.create(img`
     . . . . . . . . . . . . . . . .

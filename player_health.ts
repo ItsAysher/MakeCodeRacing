@@ -16,7 +16,7 @@ function createPlayerHealthBar() {
     }
 
     playerHealthBar = statusbars.create(44, 6, StatusBarKind.Durability)
-    playerHealthBar.max = durability
+    playerHealthBar.max = playerMaximumDurability
     playerHealthBar.value = playerRaceHealth
     playerHealthBar.setColor(7, 2, 4)
     playerHealthBar.setBarBorder(1, 15)
@@ -28,7 +28,7 @@ function createPlayerHealthBar() {
 }
 
 function startPlayerRaceHealth() {
-    playerRaceHealth = durability
+    playerRaceHealth = playerMaximumDurability
     playerCarWrecked = false
     lastPlayerWallDamageTime = 0
     lastPlayerRacerDamageTime = 0

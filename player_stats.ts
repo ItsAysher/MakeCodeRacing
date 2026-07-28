@@ -1,66 +1,35 @@
-// Player car parts, equipped upgrades, and calculated performance stats
+// Player part catalog, ownership, and equipped loadout.
+//
+// Every part array is ordered by tier: index 0 is Tier 1, index 1 is Tier 2,
+// and index 2 is Tier 3. Equipped parts are stored as tier indexes so stat
+// calculations never need to search for a display name.
 
-// Car Part Lists
-let engines = ["V1", "V2", "V3"]
-let wheelTypes = ["W1", "W2", "W3"]
-let carBodies = ["B1", "B2", "B3"]
-let brakeTypes = ["BR1", "BR2", "BR3"]
+let engineNames = ["V1", "V2", "V3"]
+let wheelNames = ["W1", "W2", "W3"]
+let bodyNames = ["B1", "B2", "B3"]
+let brakeNames = ["BR1", "BR2", "BR3"]
 
-// Upgrade economy. Tier 1 parts are owned at the start; every Tier 2 and
-// Tier 3 part must be purchased separately for its category.
+// Tier 1 parts are owned at the start. Higher-tier parts are purchased
+// separately for each category.
 let partPrices = [0, 300, 1000]
 let engineUnlocked = [true, false, false]
 let wheelsUnlocked = [true, false, false]
 let bodyUnlocked = [true, false, false]
 let brakesUnlocked = [true, false, false]
 
-// Engine Stats
-let engineSpeeds = [20, 28, 35]
-let engineAccelerations = [2, 3, 4]
+// Engine and wheels combine to produce raw speed and acceleration ratings.
+let engineSpeedRatings = [20, 28, 35]
+let engineAccelerationRatings = [2, 3, 4]
+let wheelSpeedRatings = [10, 12, 15]
+let wheelAccelerationRatings = [1, 2, 3]
 
-// Wheel Stats
-let wheelSpeeds = [10, 12, 15]
-let wheelAccelerations = [1, 2, 3]
+// Body controls maximum durability and the percentage of raw speed that the
+// car can use. Brakes provide the braking rating.
+let bodyMaximumDurabilities = [40, 60, 100]
+let bodyEfficiencyPercents = [60, 80, 100]
+let brakeRatings = [10, 20, 30]
 
-// Body Stats
-let bodyDurabilities = [40, 60, 100]
-let bodyEfficiencies = [60, 80, 100]
-
-// Brake Stats
-let brakeSpeeds = [10, 20, 30]
-
-// Current Car Parts
-let engine = engines[0]
-let wheels = wheelTypes[0]
-let body = carBodies[0]
-let brakes = brakeTypes[0]
-
-// Player Stats
-let rawSpeed = 0
-let speed = 0
-let acceleration = 0
-let brakeSpeed = 0
-let durability = 0
-let efficiency = 0
-
-function getPartIndex(part: string, partList: string[]) {
-    let index = partList.indexOf(part)
-
-    return index
-}
-
-function updatePlayerStats() {
-    let engineIndex = getPartIndex(engine, engines)
-    let wheelIndex = getPartIndex(wheels, wheelTypes)
-    let bodyIndex = getPartIndex(body, carBodies)
-    let brakeIndex = getPartIndex(brakes, brakeTypes)
-
-    rawSpeed = engineSpeeds[engineIndex] + wheelSpeeds[wheelIndex]
-    acceleration = engineAccelerations[engineIndex] + wheelAccelerations[wheelIndex]
-    durability = bodyDurabilities[bodyIndex]
-    efficiency = bodyEfficiencies[bodyIndex]
-    brakeSpeed = brakeSpeeds[brakeIndex]
-
-    // Efficiency controls how much of the engine/wheel speed can be used.
-    speed = rawSpeed * efficiency / 100
-}
+let equippedEngineTier = 0
+let equippedWheelTier = 0
+let equippedBodyTier = 0
+let equippedBrakeTier = 0
