@@ -36,15 +36,18 @@ function loadSelectedRaceMap() {
 function configureRaceDifficulty() {
     if (selectedRace == RaceDifficulty.Expert) {
         raceLapTarget = 3
-        racePrize = 300
+        // Two Expert wins buy one Tier 3 part.
+        racePrize = 500
         raceTimeLimit = 65
     } else if (selectedRace == RaceDifficulty.Intermediate) {
         raceLapTarget = 2
-        racePrize = 175
+        // Five Intermediate wins buy one Tier 3 part.
+        racePrize = 200
         raceTimeLimit = 55
     } else {
         raceLapTarget = 1
-        racePrize = 75
+        // Three Beginner wins buy one Tier 2 part.
+        racePrize = 100
         raceTimeLimit = 40
     }
 }

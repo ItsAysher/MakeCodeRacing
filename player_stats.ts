@@ -6,6 +6,14 @@ let wheelTypes = ["W1", "W2", "W3"]
 let carBodies = ["B1", "B2", "B3"]
 let brakeTypes = ["BR1", "BR2", "BR3"]
 
+// Upgrade economy. Tier 1 parts are owned at the start; every Tier 2 and
+// Tier 3 part must be purchased separately for its category.
+let partPrices = [0, 300, 1000]
+let engineUnlocked = [true, false, false]
+let wheelsUnlocked = [true, false, false]
+let bodyUnlocked = [true, false, false]
+let brakesUnlocked = [true, false, false]
+
 // Engine Stats
 let engineSpeeds = [20, 28, 35]
 let engineAccelerations = [2, 3, 4]

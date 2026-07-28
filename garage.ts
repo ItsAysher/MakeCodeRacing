@@ -16,42 +16,96 @@ function setGarageBackground(category: string) {
     }
 }
 
+function partMenuLabel(partList: string[], unlockedParts: boolean[], index: number) {
+    if (unlockedParts[index]) {
+        return partList[index]
+    }
+
+    return partList[index] + " ($" + partPrices[index] + ")"
+}
+
+function choosePartIndex(partList: string[], unlockedParts: boolean[]) {
+    let tier1Choice = partMenuLabel(partList, unlockedParts, 0)
+    let tier2Choice = partMenuLabel(partList, unlockedParts, 1)
+    let tier3Choice = partMenuLabel(partList, unlockedParts, 2)
+
+    story.showPlayerChoices(tier1Choice, tier2Choice, tier3Choice, "Back")
+
+    if (story.checkLastAnswer(tier1Choice)) {
+        return 0
+    } else if (story.checkLastAnswer(tier2Choice)) {
+        return 1
+    } else if (story.checkLastAnswer(tier3Choice)) {
+        return 2
+    }
+
+    return -1
+}
+
+function unlockPart(partName: string, partIndex: number, unlockedParts: boolean[]) {
+    if (unlockedParts[partIndex]) {
+        return true
+    }
+
+    let price = partPrices[partIndex]
+
+    if (cash < price) {
+        story.printCharacterText(
+            partName + " costs $" + price +
+            ".\nYou need $" + (price - cash) +
+            " more. Win more races!"
+        )
+        return false
+    }
+
+    story.showPlayerChoices("Buy for $" + price, "Cancel")
+
+    if (story.checkLastAnswer("Buy for $" + price)) {
+        cash -= price
+        unlockedParts[partIndex] = true
+        story.printCharacterText(partName + " purchased!\nCash remaining: $" + cash)
+        return true
+    }
+
+    return false
+}
+
 function chooseEngine() {
     setGarageBackground("engine")
-    story.showPlayerChoices(engines[0], engines[1], engines[2], "Back")
+    let selectedPart = choosePartIndex(engines, engineUnlocked)
 
-    if (!story.checkLastAnswer("Back")) {
-        engine = story.getLastAnswer()
+    if (selectedPart >= 0 && unlockPart(engines[selectedPart], selectedPart, engineUnlocked)) {
+        engine = engines[selectedPart]
         updatePlayerStats()
     }
 }
 
 function chooseWheels() {
     setGarageBackground("wheels")
-    story.showPlayerChoices(wheelTypes[0], wheelTypes[1], wheelTypes[2], "Back")
+    let selectedPart = choosePartIndex(wheelTypes, wheelsUnlocked)
 
-    if (!story.checkLastAnswer("Back")) {
-        wheels = story.getLastAnswer()
+    if (selectedPart >= 0 && unlockPart(wheelTypes[selectedPart], selectedPart, wheelsUnlocked)) {
+        wheels = wheelTypes[selectedPart]
         updatePlayerStats()
     }
 }
 
 function chooseBody() {
     setGarageBackground("body")
-    story.showPlayerChoices(carBodies[0], carBodies[1], carBodies[2], "Back")
+    let selectedPart = choosePartIndex(carBodies, bodyUnlocked)
 
-    if (!story.checkLastAnswer("Back")) {
-        body = story.getLastAnswer()
+    if (selectedPart >= 0 && unlockPart(carBodies[selectedPart], selectedPart, bodyUnlocked)) {
+        body = carBodies[selectedPart]
         updatePlayerStats()
     }
 }
 
 function chooseBrakes() {
     setGarageBackground("brakes")
-    story.showPlayerChoices(brakeTypes[0], brakeTypes[1], brakeTypes[2], "Back")
+    let selectedPart = choosePartIndex(brakeTypes, brakesUnlocked)
 
-    if (!story.checkLastAnswer("Back")) {
-        brakes = story.getLastAnswer()
+    if (selectedPart >= 0 && unlockPart(brakeTypes[selectedPart], selectedPart, brakesUnlocked)) {
+        brakes = brakeTypes[selectedPart]
         updatePlayerStats()
     }
 }
@@ -62,7 +116,8 @@ function showCarStats() {
         "\nAcceleration: " + acceleration +
         "\nBraking: " + brakeSpeed +
         "\nDurability: " + durability +
-        "\nEfficiency: " + efficiency + "%"
+        "\nEfficiency: " + efficiency + "%" +
+        "\nCash: $" + cash,
     )
 }
 
@@ -131,7 +186,7 @@ function chooseDrivingMode() {
                 selectedDrivingMode = DrivingMode.FreeRoam
                 garageIsOpen = false
             } else {
-                story.printCharacterText("Free Roam unlocks after 10 race wins.\nCurrent wins: " + wins)
+                game.showLongText("Free Roam unlocks after 10 race wins.\nCurrent wins: " + wins, DialogLayout.Full)
             }
         } else {
             leaveDrivingModeMenu = true
@@ -165,8 +220,7 @@ function showGarage() {
     }
 }
 
-// Use this hook whenever a race ends. It records the result and opens the
-// Garage before the next race can begin.
+// Records the result and opens the Garage before the next race can begin.
 function finishRace(won: boolean, prizeMoney: number) {
     racesRaced += 1
     cash += prizeMoney
