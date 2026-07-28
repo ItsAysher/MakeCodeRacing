@@ -7,7 +7,8 @@
         "arcade-storytelling": "github:microsoft/arcade-storytelling#v1.0.3",
         "arcade-minimap": "github:microsoft/arcade-minimap#v0.6.1",
         "status-bar": "github:jwunderl/pxt-status-bar#v0.4.2",
-        "arcade-timers": "github:microsoft/arcade-timers#v1.1.0"
+        "arcade-timers": "github:microsoft/arcade-timers#v1.1.0",
+        "arcade-tile-util": "github:microsoft/arcade-tile-util#v1.2.0"
     },
     "files": [
         "main.blocks",
@@ -19,6 +20,7 @@
         "images.g.ts",
         "player_movement.ts",
         "player_health.ts",
+        "freeroam_world.ts",
         "race.ts",
         "ai_racers.ts",
         "garage.ts",

@@ -142,16 +142,14 @@ function startFreeRoam() {
     freeRoamInProgress = true
     checkpointArmed = false
 
-    // This is intentionally only a reference. The freeroam-map tilemap asset
-    // will be authored separately.
-    tiles.setCurrentTilemap(tilemap`freeroamMap`)
+    loadSelectedFreeRoamMap()
     scroller.setLayerImage(scroller.BackgroundLayer.Layer0, image.create(1, 1))
     scroller.scrollBackgroundWithSpeed(0, 0)
     scene.setBackgroundColor(7)
 
     player.setFlag(SpriteFlag.Invisible, false)
     player.setFlag(SpriteFlag.GhostThroughWalls, false)
-    tiles.placeOnRandomTile(player, assets.tile`raceRoadTile`)
+    tiles.placeOnTile(player, tiles.getTileLocation(16, 16))
     startPlayerMovement()
     scene.cameraFollowSprite(player)
 
@@ -163,7 +161,7 @@ function startFreeRoam() {
         raceMinimap.setFlag(SpriteFlag.Invisible, true)
     }
 
-    game.splash("FREE ROAM", "Drive freely. Press B to return to the Garage.")
+    game.splash(freeRoamThemeName() + " FREE ROAM", "Drive freely. Press B to return to the Garage.")
 }
 
 function completeCurrentRace(won: boolean) {
@@ -200,6 +198,7 @@ function leaveRaceForGarage() {
     stopPlayerMovement()
     player.setFlag(SpriteFlag.Invisible, true)
     scene.setTileMapLevel(null)
+    clearFreeRoamMapState()
     scene.centerCameraAt(80, 60)
     scroller.setLayerImage(scroller.BackgroundLayer.Layer0, image.create(1, 1))
     scroller.scrollBackgroundWithSpeed(0, 0)

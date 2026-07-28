@@ -1,0 +1,13 @@
+# Keep text files consistent across VS Code, GitHub, and MakeCode.
+* text=auto eol=lf
+
+# Do not perform line-ending conversion on binary assets.
+*.gif binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.mp3 binary
+*.ogg binary
+*.png binary
+*.uf2 binary
+*.wav binary

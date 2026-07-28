@@ -183,8 +183,7 @@ function chooseDrivingMode() {
             chooseRaceDifficulty()
         } else if (story.checkLastAnswer(freeRoamChoice)) {
             if (wins >= 10) {
-                selectedDrivingMode = DrivingMode.FreeRoam
-                garageIsOpen = false
+                chooseFreeRoamTheme()
             } else {
                 game.showLongText("Free Roam unlocks after 10 race wins.\nCurrent wins: " + wins, DialogLayout.Full)
             }
@@ -192,6 +191,24 @@ function chooseDrivingMode() {
             leaveDrivingModeMenu = true
         }
     }
+}
+
+function chooseFreeRoamTheme() {
+    setGarageBackground("main")
+    story.showPlayerChoices("Forest", "Highway", "Cave", "Back")
+
+    if (story.checkLastAnswer("Forest")) {
+        selectedFreeRoamTheme = FreeRoamTheme.Forest
+    } else if (story.checkLastAnswer("Highway")) {
+        selectedFreeRoamTheme = FreeRoamTheme.Highway
+    } else if (story.checkLastAnswer("Cave")) {
+        selectedFreeRoamTheme = FreeRoamTheme.Cave
+    } else {
+        return
+    }
+
+    selectedDrivingMode = DrivingMode.FreeRoam
+    garageIsOpen = false
 }
 
 // This function blocks its current cutscene until the player chooses Start Race.
