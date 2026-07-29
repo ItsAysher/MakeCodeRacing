@@ -897,9 +897,3 @@ c c c c c c c c c c c c c c c c c c c c c c c 2
 
 }
 // Auto-generated code. Do not edit.
-
-// Auto-generated code. Do not edit.
-namespace myTiles {
-
-}
-// Auto-generated code. Do not edit.
