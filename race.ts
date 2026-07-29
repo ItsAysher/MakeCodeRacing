@@ -33,6 +33,9 @@ function loadSelectedRaceMap() {
     }
 }
 
+/**
+ * Sets lap count, prize money, and time limit for the selected difficulty.
+ */
 function configureRaceDifficulty() {
     if (selectedRace == RaceDifficulty.Expert) {
         raceLapTarget = 3
@@ -56,6 +59,10 @@ function configureRaceBackground() {
     scene.setBackgroundColor(7)
 }
 
+/**
+ * Rebuilds the minimap image and keeps its camera-relative HUD sprite current.
+ * The sprite is created lazily on the first race update.
+ */
 function updateRaceMinimap() {
     if (!raceInProgress) {
         return
@@ -86,6 +93,9 @@ function raceName() {
     return "BEGINNER"
 }
 
+/**
+ * Starts either a race or Free Roam after the Garage closes.
+ */
 function startSelectedDrivingMode() {
     if (selectedDrivingMode == DrivingMode.FreeRoam) {
         startFreeRoam()
@@ -94,6 +104,9 @@ function startSelectedDrivingMode() {
     }
 }
 
+/**
+ * Initializes a race map, player systems, AI opponents, HUD, and countdown.
+ */
 function startNextRace() {
     freeRoamInProgress = false
     loadSelectedRaceMap()
@@ -119,6 +132,9 @@ function startNextRace() {
     info.startCountdown(raceTimeLimit)
 }
 
+/**
+ * Initializes the selected randomized Free Roam map without race-only systems.
+ */
 function startFreeRoam() {
     stopAIRaceSystems()
     stopPlayerRaceHealth()
@@ -146,6 +162,10 @@ function startFreeRoam() {
     game.splash(freeRoamThemeName() + " FREE ROAM", "Drive freely. Press B to return to the Garage.")
 }
 
+/**
+ * Stops the active race, shows the appropriate result, and awards prize money.
+ * @param won Whether the player completed the required laps before an opponent.
+ */
 function completeCurrentRace(won: boolean) {
     if (!raceInProgress) {
         return
@@ -171,6 +191,9 @@ function completeCurrentRace(won: boolean) {
     finishRace(won, won ? racePrize : 0)
 }
 
+/**
+ * Clears active driving systems and restores the neutral Garage scene state.
+ */
 function leaveRaceForGarage() {
     stopAIRaceSystems()
     stopPlayerRaceHealth()
@@ -191,12 +214,14 @@ function leaveRaceForGarage() {
     }
 }
 
+// Arms the player to complete a lap after crossing the finish line.
 scene.onOverlapTile(SpriteKind.Player, assets.tile`raceCheckpointTile`, function (sprite, location) {
     if (raceInProgress) {
         checkpointArmed = true
     }
 })
 
+// Records an armed lap and completes the race when the target is reached.
 scene.onOverlapTile(SpriteKind.Player, assets.tile`raceFinishTile`, function (sprite, location) {
     if (!raceInProgress || !checkpointArmed) {
         return
@@ -213,12 +238,14 @@ scene.onOverlapTile(SpriteKind.Player, assets.tile`raceFinishTile`, function (sp
     }
 })
 
+// Treats an expired countdown as a race loss.
 info.onCountdownEnd(function () {
     if (raceInProgress) {
         completeCurrentRace(false)
     }
 })
 
+// B exits Free Roam but intentionally has no action during a race.
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     if (freeRoamInProgress) {
         leaveRaceForGarage()

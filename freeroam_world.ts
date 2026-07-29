@@ -29,6 +29,11 @@ function isFreeRoamSpawnArea(column: number, row: number): boolean {
     return Math.abs(column - 16) <= 2 && Math.abs(row - 16) <= 2
 }
 
+/**
+ * Randomizes forest ground and obstacles while keeping the central spawn clear.
+ * Trees and rocks become walls; flowers are visual overlays.
+ * @param map The cloned forest map to decorate.
+ */
 function randomizeForestDecorations(map: tiles.TileMapData) {
     tileUtil.forEachTileInMap(map, function (column, row, location) {
         if (isFreeRoamSpawnArea(column, row)) {
@@ -55,6 +60,11 @@ function randomizeForestDecorations(map: tiles.TileMapData) {
     })
 }
 
+/**
+ * Randomizes roadside grass and adds sparse road wear and solid traffic cones.
+ * The central spawn area is never modified.
+ * @param map The cloned highway map to decorate.
+ */
 function randomizeHighwayDecorations(map: tiles.TileMapData) {
     tileUtil.forEachTileInMap(map, function (column, row, location) {
         if (isFreeRoamSpawnArea(column, row)) {
@@ -86,6 +96,10 @@ function randomizeHighwayDecorations(map: tiles.TileMapData) {
     })
 }
 
+/**
+ * Adds cave rubble, moss, and crystals without blocking the main travel tunnels.
+ * @param map The cloned cave map to decorate.
+ */
 function randomizeCaveDecorations(map: tiles.TileMapData) {
     tileUtil.forEachTileInMap(map, function (column, row, location) {
         if (isFreeRoamSpawnArea(column, row)) {
@@ -108,8 +122,8 @@ function randomizeCaveDecorations(map: tiles.TileMapData) {
             if (decorationRoll < 4) {
                 tileUtil.coverTile(location, assets.tile`caveRubble`)
             } else if (decorationRoll < 10 && !isMainTunnel) {
-            // Crystals are solid, so keep them out of the four-tile-wide tunnels
-            // that guarantee travel between repeated map edges.
+                // Crystals are solid, so keep them out of the four-tile-wide
+                // tunnels that guarantee travel between repeated map edges.
                 tileUtil.coverTile(location, assets.tile`caveCrystal`)
                 tileUtil.setWallAt(map, location, true)
             } else if (decorationRoll < 17) {
@@ -119,6 +133,10 @@ function randomizeCaveDecorations(map: tiles.TileMapData) {
     })
 }
 
+/**
+ * Applies the decoration rules for the currently selected Free Roam theme.
+ * @param map The cloned base map that may be safely modified.
+ */
 function randomizeFreeRoamDecorations(map: tiles.TileMapData) {
     if (selectedFreeRoamTheme == FreeRoamTheme.Highway) {
         randomizeHighwayDecorations(map)
@@ -129,9 +147,11 @@ function randomizeFreeRoamDecorations(map: tiles.TileMapData) {
     }
 }
 
+/**
+ * Clones, activates, and decorates the selected Free Roam map.
+ * Cloning prevents randomized changes from modifying the authored asset.
+ */
 function loadSelectedFreeRoamMap() {
-    // Cloning protects the authored base. Each entry into Free Roam starts with
-    // a fresh map, so random decorations never become part of the source asset.
     activeFreeRoamMap = tileUtil.cloneMap(selectedFreeRoamBaseMap())
     tiles.setCurrentTilemap(activeFreeRoamMap)
     randomizeFreeRoamDecorations(activeFreeRoamMap)

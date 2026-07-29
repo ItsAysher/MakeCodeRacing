@@ -10,6 +10,10 @@ let playerCarWrecked = false
 let lastPlayerWallDamageTime = 0
 let lastPlayerRacerDamageTime = 0
 
+/**
+ * Replaces the durability HUD and positions it in the upper-right corner.
+ * Its maximum comes from the currently equipped body.
+ */
 function createPlayerHealthBar() {
     if (playerHealthBar) {
         playerHealthBar.destroy()
@@ -27,6 +31,9 @@ function createPlayerHealthBar() {
     playerHealthBar.top = 11
 }
 
+/**
+ * Resets durability and collision cooldowns, then creates the race HUD.
+ */
 function startPlayerRaceHealth() {
     playerRaceHealth = playerMaximumDurability
     playerCarWrecked = false
@@ -42,6 +49,11 @@ function stopPlayerRaceHealth() {
     }
 }
 
+/**
+ * Applies durability damage and ends the race when the car becomes wrecked.
+ * Damage is ignored outside races or after the car has already been wrecked.
+ * @param amount Durability points to remove.
+ */
 function damagePlayerCar(amount: number) {
     if (!raceInProgress || !playerHealthBar || playerCarWrecked) {
         return
@@ -61,6 +73,7 @@ function isPlayerCarWrecked() {
     return playerCarWrecked
 }
 
+// Damages and separates colliding cars, with a cooldown to prevent rapid hits.
 sprites.onOverlap(SpriteKind.Player, SpriteKind.AIRacer, function (playerSprite, racer) {
     if (!raceInProgress ||
         control.millis() - lastPlayerRacerDamageTime < 700) {
@@ -77,6 +90,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.AIRacer, function (playerSprite,
     racer.vy = racer.vy * -0.2
 })
 
+// Applies wall damage at most once per cooldown interval.
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
     if (!raceInProgress ||
         control.millis() - lastPlayerWallDamageTime < 600) {

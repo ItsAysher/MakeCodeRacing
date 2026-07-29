@@ -24,6 +24,9 @@ let player = sprites.create(img`
     . . . . . . . . . . . . . . . .
 `, SpriteKind.Player)
 
+/**
+ * Blocks the opening sequence until the player starts or reads the instructions.
+ */
 function showStartMenu() {
     let hasStarted = false
 
@@ -38,6 +41,9 @@ function showStartMenu() {
     }
 }
 
+/**
+ * Runs the opening cutscene, first Garage visit, and selected driving mode.
+ */
 function runStartingSequence() {
     story.startCutscene(function () {
         // Placeholder opening cutscene. Replace this text with the final intro.

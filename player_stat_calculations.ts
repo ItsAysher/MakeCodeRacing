@@ -19,6 +19,10 @@ let playerReverseAcceleration = 0
 let playerBrakingDeceleration = 0
 let playerBaseTurnRate = 0
 
+/**
+ * Rebuilds all player ratings and physics values from the equipped part tiers.
+ * Call this after changing any equipped engine, wheels, body, or brakes.
+ */
 function recalculatePlayerStats() {
     playerRawSpeedRating =
         engineSpeedRatings[equippedEngineTier] +
@@ -44,6 +48,11 @@ function recalculatePlayerStats() {
     playerBaseTurnRate = 4.5 + playerAccelerationRating * 0.45
 }
 
+/**
+ * Reduces steering response as the car approaches maximum speed.
+ * @param speedRatio Current speed divided by maximum speed, clamped to 0–1.
+ * @returns The turn rate used for this movement update.
+ */
 function playerTurnRateAtSpeed(speedRatio: number) {
     return playerBaseTurnRate * (1 - speedRatio * 0.45)
 }

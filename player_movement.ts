@@ -55,8 +55,11 @@ let playerCollisionImage = img`
     1 1 1 1 1 1 1 1 1 1
 `
 
-// Call this after movement is updated. It picks the equipped body's image set
-// and makes the car face its strongest velocity axis.
+/**
+ * Synchronizes the visible car with the hidden collision sprite.
+ * It selects the equipped body and faces the strongest velocity axis unless
+ * the car is reversing.
+ */
 function updatePlayerCarImage() {
     if (equippedBodyTier != currentCarBodyIndex) {
         currentCarBodyIndex = equippedBodyTier
@@ -112,6 +115,9 @@ function playerCarFacingY() {
     return 0
 }
 
+/**
+ * Resets velocity and enables the hidden-collider/visible-car sprite pair.
+ */
 function startPlayerMovement() {
     player.vx = 0
     player.vy = 0
@@ -131,6 +137,11 @@ function stopPlayerMovement() {
     }
 }
 
+/**
+ * Updates acceleration, braking, reversing, steering, and coasting for one frame.
+ * Input changes direction gradually so high-speed turns remain wider than
+ * low-speed turns.
+ */
 function updatePlayerMovement() {
     if (!raceInProgress && !freeRoamInProgress) {
         return
@@ -278,6 +289,7 @@ function updatePlayerMovement() {
     player.vy = directionY * currentSpeed
 }
 
+// Keeps movement physics and the visible car image synchronized every frame.
 game.onUpdate(function () {
     updatePlayerMovement()
     updatePlayerCarImage()

@@ -15,12 +15,14 @@ function setGarageBackground(category: string) {
         scene.setBackgroundImage(assets.image`garage-main-background`)
     }
 }
-// test commit message
-/*
-@param partList - The list of part names for the current category.
-@param unlockedParts - The array indicating which parts are unlocked.
-@param index - The index of the part to display.
-*/
+
+/**
+ * Returns the label for a part in the Garage menu.
+ * @param partList The part names for the current category.
+ * @param unlockedParts Ownership state for the current category.
+ * @param index The tier index to display.
+ * @returns The part name, including its price when locked.
+ */
 function partMenuLabel(partList: string[], unlockedParts: boolean[], index: number) {
     if (unlockedParts[index]) {
         return partList[index]
@@ -29,6 +31,12 @@ function partMenuLabel(partList: string[], unlockedParts: boolean[], index: numb
     return partList[index] + " ($" + partPrices[index] + ")"
 }
 
+/**
+ * Shows all tiers for one category and returns the selected tier index.
+ * @param partList The part names for the current category.
+ * @param unlockedParts Ownership state for the current category.
+ * @returns The selected tier index, or -1 when the player chooses Back.
+ */
 function choosePartIndex(partList: string[], unlockedParts: boolean[]) {
     let tier1Choice = partMenuLabel(partList, unlockedParts, 0)
     let tier2Choice = partMenuLabel(partList, unlockedParts, 1)
@@ -47,6 +55,14 @@ function choosePartIndex(partList: string[], unlockedParts: boolean[]) {
     return -1
 }
 
+/**
+ * Purchases a locked part after checking cash and confirming the transaction.
+ * Already-owned parts succeed immediately so they can be equipped again.
+ * @param partName The part name shown in purchase messages.
+ * @param partIndex The tier index in the catalog.
+ * @param unlockedParts Ownership state for the current category.
+ * @returns True when the selected part is available to equip.
+ */
 function unlockPart(partName: string, partIndex: number, unlockedParts: boolean[]) {
     if (unlockedParts[partIndex]) {
         return true
@@ -126,6 +142,9 @@ function showCarStats() {
     )
 }
 
+/**
+ * Runs the secondary Garage menu for brakes, stats, and driving-mode selection.
+ */
 function showMoreGarageOptions() {
     let leaveMoreMenu = false
 
@@ -146,6 +165,10 @@ function showMoreGarageOptions() {
     }
 }
 
+/**
+ * Selects a race difficulty and enforces its win-count requirement.
+ * A valid selection closes the Garage and prepares Race mode.
+ */
 function chooseRaceDifficulty() {
     let intermediateChoice = wins >= 5 ? "Intermediate" : "Intermediate (5 wins)"
     let expertChoice = wins >= 10 ? "Expert" : "Expert (10 wins)"
@@ -176,6 +199,9 @@ function chooseRaceDifficulty() {
     }
 }
 
+/**
+ * Runs the driving-mode menu and enforces the Free Roam unlock requirement.
+ */
 function chooseDrivingMode() {
     let leaveDrivingModeMenu = false
 
@@ -199,6 +225,9 @@ function chooseDrivingMode() {
     }
 }
 
+/**
+ * Selects a Free Roam theme, prepares Free Roam mode, and closes the Garage.
+ */
 function chooseFreeRoamTheme() {
     setGarageBackground("main")
     story.showPlayerChoices("Forest", "Highway", "Cave", "Back")
@@ -217,7 +246,10 @@ function chooseFreeRoamTheme() {
     garageIsOpen = false
 }
 
-// This function blocks its current cutscene until the player chooses Start Race.
+/**
+ * Runs the main Garage loop until the player chooses a driving mode.
+ * The function blocks its current storytelling cutscene while menus are open.
+ */
 function showGarage() {
     leaveRaceForGarage()
     garageIsOpen = true
@@ -246,7 +278,11 @@ function showGarage() {
     }
 }
 
-// Records the result and opens the Garage before the next race can begin.
+/**
+ * Records a race result, awards its prize, and opens the Garage.
+ * @param won Whether the player won the race.
+ * @param prizeMoney Cash awarded for this result.
+ */
 function finishRace(won: boolean, prizeMoney: number) {
     racesRaced += 1
     cash += prizeMoney
@@ -258,8 +294,10 @@ function finishRace(won: boolean, prizeMoney: number) {
     openGarage(startSelectedDrivingMode)
 }
 
-// Opens the Garage safely from normal gameplay by putting it in a storytelling
-// cutscene. The callback runs only after Start Race is selected.
+/**
+ * Opens the Garage inside a storytelling cutscene and restores the old background.
+ * @param afterGarage Optional callback run after a driving mode closes the Garage.
+ */
 function openGarage(afterGarage?: () => void) {
     if (garageIsOpen) {
         return

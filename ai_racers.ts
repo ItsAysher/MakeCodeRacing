@@ -30,6 +30,11 @@ function aiBodyImages() {
     return carBody1Images
 }
 
+/**
+ * Clones the body images for one opponent and applies a randomized paint scheme.
+ * The selected difficulty determines both the body tier and colors replaced.
+ * @returns Directional images ordered up, down, left, and right.
+ */
 function createAIRacerImages() {
     let sourceImages = aiBodyImages()
     let racerImages: Image[] = []
@@ -56,6 +61,10 @@ function createAIRacerImages() {
     return racerImages
 }
 
+/**
+ * Selects an opponent's directional image from its strongest velocity axis.
+ * @param racer The AI racer whose appearance should follow its movement.
+ */
 function updateAIRacerImage(racer: Sprite) {
     let direction = CarImageDirection.Up
 
@@ -72,6 +81,10 @@ function updateAIRacerImage(racer: Sprite) {
     }
 }
 
+/**
+ * Creates and initializes every opponent required by the selected difficulty.
+ * Opponents receive independent speed rolls, image sets, and race progress.
+ */
 function createAIRacers() {
     let count = aiCountForSelectedRace()
 
@@ -95,6 +108,12 @@ function createAIRacers() {
     }
 }
 
+/**
+ * Steers an opponent toward its current waypoint and advances the route on arrival.
+ * Velocity is blended instead of replaced so opponents turn smoothly.
+ * @param racer The opponent to update.
+ * @param deltaTime Seconds elapsed since the previous frame.
+ */
 function updateAIRacer(racer: Sprite, deltaTime: number) {
     // Waypoints follow the center of the rectangular authored race loop:
     // bottom-right, top-right, top-left, bottom-left.
@@ -122,6 +141,9 @@ function updateAIRacer(racer: Sprite, deltaTime: number) {
     updateAIRacerImage(racer)
 }
 
+/**
+ * Resets and starts the AI subsystem for a new race.
+ */
 function startAIRaceSystems() {
     // startNextRace is the only caller; stop first so restarting never leaves
     // racers from the previous race.
@@ -130,6 +152,9 @@ function startAIRaceSystems() {
     createAIRacers()
 }
 
+/**
+ * Stops AI updates and destroys all opponents from the previous race.
+ */
 function stopAIRaceSystems() {
     aiRaceSystemsActive = false
 
@@ -140,12 +165,14 @@ function stopAIRaceSystems() {
 
 }
 
+// Arms an opponent to complete a lap after it reaches the finish line.
 scene.onOverlapTile(SpriteKind.AIRacer, assets.tile`raceCheckpointTile`, function (racer, location) {
     if (aiRaceSystemsActive) {
         racer.data.checkpointArmed = true
     }
 })
 
+// Records an armed opponent lap and ends the race if it reaches the lap target.
 scene.onOverlapTile(SpriteKind.AIRacer, assets.tile`raceFinishTile`, function (racer, location) {
     if (!aiRaceSystemsActive || !racer.data.checkpointArmed) {
         return
@@ -159,6 +186,7 @@ scene.onOverlapTile(SpriteKind.AIRacer, assets.tile`raceFinishTile`, function (r
     }
 })
 
+// Updates active opponents every frame using the current frame duration.
 game.onUpdate(function () {
     if (!aiRaceSystemsActive) {
         return
