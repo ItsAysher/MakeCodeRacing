@@ -15,7 +15,12 @@ function setGarageBackground(category: string) {
         scene.setBackgroundImage(assets.image`garage-main-background`)
     }
 }
-
+// test commit message
+/*
+@param partList - The list of part names for the current category.
+@param unlockedParts - The array indicating which parts are unlocked.
+@param index - The index of the part to display.
+*/
 function partMenuLabel(partList: string[], unlockedParts: boolean[], index: number) {
     if (unlockedParts[index]) {
         return partList[index]
