@@ -7,7 +7,7 @@ namespace StatusBarKind {
 let playerHealthBar: StatusBarSprite = null
 let playerRaceHealth = 0
 let playerCarWrecked = false
-let lastPlayerWallDamageTime = 0
+let lastPlayerWallImpactTime = 0
 let lastPlayerRacerDamageTime = 0
 
 /**
@@ -37,7 +37,7 @@ function createPlayerHealthBar() {
 function startPlayerRaceHealth() {
     playerRaceHealth = playerMaximumDurability
     playerCarWrecked = false
-    lastPlayerWallDamageTime = 0
+    lastPlayerWallImpactTime = 0
     lastPlayerRacerDamageTime = 0
     createPlayerHealthBar()
 }
@@ -92,11 +92,15 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.AIRacer, function (playerSprite,
 
 // Applies wall damage at most once per cooldown interval.
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
-    if (!raceInProgress ||
-        control.millis() - lastPlayerWallDamageTime < 600) {
+    if ((!raceInProgress && !freeRoamInProgress) ||
+        control.millis() - lastPlayerWallImpactTime < 600) {
         return
     }
 
-    lastPlayerWallDamageTime = control.millis()
-    damagePlayerCar(8)
+    lastPlayerWallImpactTime = control.millis()
+    playPlayerWallCrashSound()
+
+    if (raceInProgress) {
+        damagePlayerCar(8)
+    }
 })

@@ -122,6 +122,7 @@ function startPlayerMovement() {
     player.vx = 0
     player.vy = 0
     playerReversing = false
+    resetPlayerVehicleSoundTimers()
     player.setImage(playerCollisionImage)
     player.setFlag(SpriteFlag.Invisible, true)
     updatePlayerCarImage()
@@ -216,6 +217,7 @@ function updatePlayerMovement() {
             )
             player.vx = inputX * currentSpeed
             player.vy = inputY * currentSpeed
+            playPlayerAccelerationSound()
         } else {
             let newSpeed = Math.max(0, currentSpeed - 9 * deltaTime)
             if (currentSpeed > 0) {
@@ -287,6 +289,8 @@ function updatePlayerMovement() {
 
     player.vx = directionX * currentSpeed
     player.vy = directionY * currentSpeed
+    playPlayerTurningSound(turnSeverity, currentSpeed)
+    playPlayerAccelerationSound()
 }
 
 // Keeps movement physics and the visible car image synchronized every frame.
