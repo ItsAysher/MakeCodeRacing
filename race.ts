@@ -220,7 +220,6 @@ info.onCountdownEnd(function () {
 })
 
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
-    // B has no race action. It exits only an active Free Roam session.
     if (freeRoamInProgress) {
         leaveRaceForGarage()
         openGarage(startSelectedDrivingMode)

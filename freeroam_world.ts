@@ -69,17 +69,8 @@ function randomizeHighwayDecorations(map: tiles.TileMapData) {
             } else if (grassRoll < 25) {
                 tileUtil.setTileAt(map, location, sprites.castle.tileDarkGrass3)
             }
-        } else if (tileUtil.tileIs(map, location, assets.tile`highwayShoulder`)) {
-            let shoulderRoll = randint(0, 99)
-
-            if (shoulderRoll < 10) {
-                tileUtil.setTileAt(map, location, assets.tile`highwayBarrier`)
-                tileUtil.setWallAt(map, location, true)
-            } else if (shoulderRoll < 17) {
-                tileUtil.coverTile(location, assets.tile`highwayCone`)
-            }
-        } else if (
-            tileUtil.tileIs(map, location, assets.tile`highwayAsphalt`) ||
+        }
+        else if (
             tileUtil.tileIs(map, location, sprites.vehicle.roadVertical) ||
             tileUtil.tileIs(map, location, sprites.vehicle.roadHorizontal)
         ) {
@@ -89,6 +80,7 @@ function randomizeHighwayDecorations(map: tiles.TileMapData) {
                 tileUtil.coverTile(location, assets.tile`highwayCrack`)
             } else if (roadRoll < 7) {
                 tileUtil.coverTile(location, assets.tile`highwayCone`)
+                tileUtil.setWallAt(map, location, true)
             }
         }
     })
@@ -101,8 +93,11 @@ function randomizeCaveDecorations(map: tiles.TileMapData) {
         }
 
         let isCaveFloor =
-            tileUtil.tileIs(map, location, sprites.dungeon.floorDark0) ||
-            tileUtil.tileIs(map, location, sprites.dungeon.floorDark1)
+            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundCenter) ||
+            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundNorthWest1) ||
+            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundNorthEast1) ||
+            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundSouthWest1) ||
+            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundSouthEast1)
 
         if (isCaveFloor) {
             let decorationRoll = randint(0, 99)
@@ -110,21 +105,15 @@ function randomizeCaveDecorations(map: tiles.TileMapData) {
                 (column >= 14 && column <= 17) ||
                 (row >= 14 && row <= 17)
 
-            // Rubble is solid, so keep it out of the four-tile-wide tunnels
+            if (decorationRoll < 4) {
+                tileUtil.coverTile(location, assets.tile`caveRubble`)
+            } else if (decorationRoll < 10 && !isMainTunnel) {
+            // Crystals are solid, so keep them out of the four-tile-wide tunnels
             // that guarantee travel between repeated map edges.
-            if (decorationRoll < 4 && !isMainTunnel) {
-                tileUtil.setTileAt(map, location, assets.tile`caveRubble`)
-                tileUtil.setWallAt(map, location, true)
-            } else if (decorationRoll < 10) {
                 tileUtil.coverTile(location, assets.tile`caveCrystal`)
+                tileUtil.setWallAt(map, location, true)
             } else if (decorationRoll < 17) {
                 tileUtil.coverTile(location, assets.tile`caveMoss`)
-            } else if (decorationRoll < 28) {
-                if (tileUtil.tileIs(map, location, sprites.dungeon.floorDark0)) {
-                    tileUtil.setTileAt(map, location, sprites.dungeon.floorDark1)
-                } else {
-                    tileUtil.setTileAt(map, location, sprites.dungeon.floorDark0)
-                }
             }
         }
     })
