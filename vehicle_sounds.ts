@@ -4,38 +4,11 @@
 // waveform, starting/ending pitch, starting/ending volume, duration, effect,
 // and interpolation curve.
 
-let playerAccelerationSound = music.createSoundEffect(
-    WaveShape.Sawtooth,
-    80,
-    150,
-    55,
-    85,
-    140,
-    SoundExpressionEffect.Vibrato,
-    InterpolationCurve.Linear
-)
+let playerAccelerationSound = music.createSoundEffect(WaveShape.Sawtooth, 80, 150, 55, 85, 140, SoundExpressionEffect.Vibrato, InterpolationCurve.Linear)
 
-let playerTurningSound = music.createSoundEffect(
-    WaveShape.Noise,
-    700,
-    240,
-    65,
-    0,
-    90,
-    SoundExpressionEffect.Tremolo,
-    InterpolationCurve.Curve
-)
+let playerTurningSound = music.createSoundEffect(WaveShape.Noise, 700, 240, 65, 0, 90, SoundExpressionEffect.Tremolo, InterpolationCurve.Curve)
 
-let playerWallCrashSound = music.createSoundEffect(
-    WaveShape.Noise,
-    180,
-    40,
-    255,
-    0,
-    220,
-    SoundExpressionEffect.Tremolo,
-    InterpolationCurve.Logarithmic
-)
+let playerWallCrashSound = music.createSoundEffect(WaveShape.Noise, 180, 40, 255, 0, 220, SoundExpressionEffect.Tremolo, InterpolationCurve.Logarithmic)
 
 let nextPlayerDrivingSoundTime = -1000
 
