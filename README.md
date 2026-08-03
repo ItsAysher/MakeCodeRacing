@@ -37,7 +37,7 @@ Defines the Forest, Highway, and Cave Free Roam themes. It clones the selected a
 
 ### `garage.ts`
 
-Owns the Garage interface and progression economy. It changes Garage backgrounds, displays part and statistics menus, purchases and equips upgrades, enforces race and Free Roam unlock requirements, and stores the player's next driving selection. It also records completed races, awards cash and wins, and runs Garage visits inside storytelling cutscenes before launching the selected mode.
+Owns the Garage interface and progression economy. Its main menu routes to the parts shop, paint shop, and driving-mode selection. It changes Garage backgrounds, displays part and statistics menus, purchases and equips upgrades and paints, enforces race and Free Roam unlock requirements, and stores the player's next driving selection. It also records completed races, awards cash and wins, and runs Garage visits inside storytelling cutscenes before launching the selected mode.
 
 ### `main.ts`
 
@@ -49,7 +49,15 @@ Implements race durability and collision damage. It creates and removes the dura
 
 ### `player_movement.ts`
 
-Owns the player's two-part car representation: a hidden collision sprite and a larger visible body sprite. It creates, destroys, and synchronizes those sprites; selects directional body artwork; and performs frame-by-frame acceleration, coasting, braking, reversing, steering, and cornering calculations while a driving mode is active.
+Owns the player's hidden collision sprite and performs frame-by-frame acceleration, coasting, braking, reversing, steering, and cornering calculations while a driving mode is active. It delegates the visible car artwork to the player renderer.
+
+### `player_rendering.ts`
+
+Owns the player's visible car sprite, all directional body and color-layer image arrays, image compositing, and the logic that switches artwork when the equipped body or driving direction changes.
+
+### `customization.ts`
+
+Contains the paint catalog, ownership and equipped-color state, body-specific source-color mappings, and the recoloring logic used by both the driving renderer and Garage car preview.
 
 ### `player_stat_calculations.ts`
 

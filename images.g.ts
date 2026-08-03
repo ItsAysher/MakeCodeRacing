@@ -1543,7 +1543,7 @@ c c c c c c c c c c c c c c c c c c c c c c c .
 . . . . . . . . . . . . . . . . . . . . . . . . 
 `;
             case "image50":
-            case "body3Up0":return img`
+            case "body3UpAccent":return img`
 . . . . . . . . . . . . 
 . . . . . . . . . . . . 
 . . . 1 1 . . 1 1 . . . 
@@ -1570,7 +1570,7 @@ c c c c c c c c c c c c c c c c c c c c c c c .
 . . . . . . . . . . . . 
 `;
             case "image51":
-            case "body3Up1":return img`
+            case "body3DownAccent":return img`
 . . . . . . . . . . . . 
 . . . . . . . . . . . . 
 . . 1 1 1 1 1 1 1 1 . . 
@@ -1597,7 +1597,7 @@ c c c c c c c c c c c c c c c c c c c c c c c .
 . . . . . . . . . . . . 
 `;
             case "image52":
-            case "body3Up2":return img`
+            case "body3LeftAccent":return img`
 . . . . . . . . . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . . . . . . . . . 
 . . . 1 . . . . . . . . . . . . . . . . . 1 . . 
@@ -1612,7 +1612,7 @@ c c c c c c c c c c c c c c c c c c c c c c c .
 . . . . . . . . . . . . . . . . . . . . . . . . 
 `;
             case "image53":
-            case "body3Up3":return img`
+            case "body3RightAccent":return img`
 . . . . . . . . . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . . . . . . . . . 
 . . 1 . . . . . . . . . . . . . . . . . 1 . . . 

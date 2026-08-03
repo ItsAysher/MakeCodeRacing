@@ -1,5 +1,5 @@
 // Metadata
-let cash = 0
+let cash = 5000
 let wins = 10
 let racesRaced = 0
 

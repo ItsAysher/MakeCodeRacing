@@ -20,9 +20,6 @@ let racePrize = 0
 let raceTimeLimit = 0
 let raceMinimap: Sprite = null
 
-// Each difficulty has its own authored tilemap asset. The tilemaps contain all
-// track, scenery, checkpoint, and finish tiles, so race.ts does not duplicate
-// any tile artwork or build a map in code.
 function loadSelectedRaceMap() {
     if (selectedRace == RaceDifficulty.Expert) {
         tiles.setCurrentTilemap(tilemap`expertRaceMap`)
@@ -117,10 +114,7 @@ function startNextRace() {
     checkpointArmed = false
     raceInProgress = true
 
-    createPlayer(
-        allCarBodyImages[equippedBodyTier][CarImageDirection.Right],
-        CarImageDirection.Right
-    )
+    createPlayer(CarImageDirection.Right)
     tiles.placeOnTile(player, tiles.getTileLocation(11, 14))
     startPlayerMovement()
     startPlayerRaceHealth()
@@ -130,7 +124,7 @@ function startNextRace() {
     info.setScore(0)
     info.showScore(true)
     updateRaceMinimap()
-    game.splash(raceName() + " RACE", "Pass the blue checkpoint, then cross the finish line!")
+    game.splash(raceName() + " RACE", "Pass the checkpoint, then cross the finish line!")
     info.startCountdown(raceTimeLimit)
 }
 
@@ -144,10 +138,7 @@ function startFreeRoam() {
     loadSelectedFreeRoamMap()
     scene.setBackgroundColor(7)
 
-    createPlayer(
-        allCarBodyImages[equippedBodyTier][CarImageDirection.Right],
-        CarImageDirection.Right
-    )
+    createPlayer(CarImageDirection.Right)
     tiles.placeOnTile(player, tiles.getTileLocation(16, 16))
     startPlayerMovement()
     scene.cameraFollowSprite(player)

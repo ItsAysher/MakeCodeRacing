@@ -18,6 +18,8 @@
         "tilemap.g.ts",
         "images.g.jres",
         "images.g.ts",
+        "customization.ts",
+        "player_rendering.ts",
         "player_movement.ts",
         "player_health.ts",
         "freeroam_world.ts",

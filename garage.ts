@@ -2,6 +2,12 @@
 
 let garageIsOpen = false
 
+/** Shows a blocking storytelling menu with any number of options. */
+function showExtendedGarageMenu(options: string[]) {
+    story._currentCutscene().showMenu(options)
+    return story.getLastAnswer()
+}
+
 function setGarageBackground(category: string) {
     if (category == "engine") {
         scene.setBackgroundImage(assets.image`garage-engine-background`)
@@ -132,35 +138,233 @@ function chooseBrakes() {
 }
 
 function showCarStats() {
-    story.printCharacterText(
+    game.showLongText(
         "Speed: " + playerTopSpeedRating +
         "\nAcceleration: " + playerAccelerationRating +
         "\nBraking: " + playerBrakingRating +
         "\nDurability: " + playerMaximumDurability +
         "\nEfficiency: " + playerEfficiencyPercent + "%" +
         "\nCash: $" + cash,
+        DialogLayout.Bottom
     )
 }
 
 /**
- * Runs the secondary Garage menu for brakes, stats, and driving-mode selection.
+ * Runs the part shop until the player returns to the main Garage menu.
  */
-function showMoreGarageOptions() {
-    let leaveMoreMenu = false
+function showPartsMenu() {
+    let leavePartsMenu = false
 
-    while (!leaveMoreMenu && garageIsOpen) {
+    while (!leavePartsMenu && garageIsOpen) {
         setGarageBackground("main")
+        let engineName = engineNames[equippedEngineTier]
+        let wheelName = wheelNames[equippedWheelTier]
+        let bodyName = bodyNames[equippedBodyTier]
         let brakeName = brakeNames[equippedBrakeTier]
-        story.showPlayerChoices("Brakes: " + brakeName, "View Car Stats", "Start Race", "Back")
+        let selectedOption = showExtendedGarageMenu([
+            "Engine: " + engineName,
+            "Wheels: " + wheelName,
+            "Body: " + bodyName,
+            "Brakes: " + brakeName,
+            "View Car Stats",
+            "Back"
+        ])
 
-        if (story.checkLastAnswer("Brakes: " + brakeName)) {
+        if (selectedOption == "Engine: " + engineName) {
+            chooseEngine()
+        } else if (selectedOption == "Wheels: " + wheelName) {
+            chooseWheels()
+        } else if (selectedOption == "Body: " + bodyName) {
+            chooseBody()
+        } else if (selectedOption == "Brakes: " + brakeName) {
             chooseBrakes()
-        } else if (story.checkLastAnswer("View Car Stats")) {
+        } else if (selectedOption == "View Car Stats") {
             showCarStats()
-        } else if (story.checkLastAnswer("Start Race")) {
-            chooseDrivingMode()
         } else {
-            leaveMoreMenu = true
+            leavePartsMenu = true
+        }
+    }
+}
+
+function paintShopLabel(index: number) {
+    if (paintColorsUnlocked[index]) {
+        return paintColorNames[index] + " - Owned"
+    }
+    return paintColorNames[index] + " - $" + paintPrice
+}
+
+/** Purchases one paint color for use on every customizable car part. */
+function buyPaintColor(index: number) {
+    if (paintColorsUnlocked[index]) {
+        story.printCharacterText(paintColorNames[index] + " paint is already owned.")
+        return
+    }
+
+    if (cash < paintPrice) {
+        story.printCharacterText(
+            paintColorNames[index] + " paint costs $" + paintPrice +
+            ".\nYou need $" + (paintPrice - cash) + " more."
+        )
+        return
+    }
+
+    story.showPlayerChoices("Buy for $" + paintPrice, "Cancel")
+    if (story.checkLastAnswer("Buy for $" + paintPrice)) {
+        cash -= paintPrice
+        paintColorsUnlocked[index] = true
+        story.printCharacterText(
+            paintColorNames[index] + " paint purchased!\nCash remaining: $" + cash
+        )
+    }
+}
+
+/** Shows every Arcade paint color in a scrolling extended menu. */
+function showBuyPaintMenu() {
+    let leavePaintShop = false
+    let firstPaintOnPage = 0
+
+    while (!leavePaintShop && garageIsOpen) {
+        let options: string[] = []
+        let lastPaintOnPage = Math.min(firstPaintOnPage + 4, paintColorNames.length)
+
+        for (let index = firstPaintOnPage; index < lastPaintOnPage; index++) {
+            options.push(paintShopLabel(index))
+        }
+
+        if (lastPaintOnPage < paintColorNames.length) {
+            options.push("More")
+        } else {
+            options.push("Back")
+        }
+
+        let selectedOption = showExtendedGarageMenu(options)
+        if (selectedOption == "More") {
+            firstPaintOnPage = lastPaintOnPage
+        } else if (selectedOption == "Back") {
+            leavePaintShop = true
+        } else {
+            for (let index = firstPaintOnPage; index < lastPaintOnPage; index++) {
+                if (selectedOption == paintShopLabel(index)) {
+                    buyPaintColor(index)
+                    break
+                }
+            }
+        }
+    }
+}
+
+function paintPartName(part: CarPaintPart) {
+    if (part == CarPaintPart.Primary) {
+        return "Primary"
+    } else if (part == CarPaintPart.Secondary) {
+        return "Secondary"
+    }
+    return "Accent"
+}
+
+/** Shows owned paints and confirms a new color for one car part. */
+function customizePaintPart(part: CarPaintPart) {
+    let colorOptions: string[] = []
+    let optionIndexes: number[] = []
+    let currentColor = equippedColorForPart(part)
+
+    for (let index = 0; index < paintColorNames.length; index++) {
+        if (paintColorsUnlocked[index]) {
+            let label = paintColorNames[index]
+            if (paintColorValues[index] == currentColor) {
+                label += " - Equipped"
+            }
+            colorOptions.push(label)
+            optionIndexes.push(index)
+        }
+    }
+
+    let firstPaintOnPage = 0
+    while (garageIsOpen) {
+        let options: string[] = []
+        let lastPaintOnPage = Math.min(firstPaintOnPage + 4, colorOptions.length)
+
+        for (let index = firstPaintOnPage; index < lastPaintOnPage; index++) {
+            options.push(colorOptions[index])
+        }
+
+        if (lastPaintOnPage < colorOptions.length) {
+            options.push("More")
+        } else {
+            options.push("Back")
+        }
+
+        let selectedOption = showExtendedGarageMenu(options)
+        if (selectedOption == "More") {
+            firstPaintOnPage = lastPaintOnPage
+        } else if (selectedOption == "Back") {
+            return
+        } else {
+            for (let optionIndex = firstPaintOnPage; optionIndex < lastPaintOnPage; optionIndex++) {
+                if (selectedOption == colorOptions[optionIndex]) {
+                    let colorIndex = optionIndexes[optionIndex]
+                    let colorName = paintColorNames[colorIndex]
+                    story.showPlayerChoices("Use " + colorName, "Cancel")
+
+                    if (story.checkLastAnswer("Use " + colorName)) {
+                        equipPlayerPaint(part, paintColorValues[colorIndex])
+                    }
+                    return
+                }
+            }
+        }
+    }
+}
+
+/** Shows the current car above the primary, secondary, and accent menu. */
+function showCustomizeCarMenu() {
+    setGarageBackground("main")
+    let preview = sprites.create(
+        playerCarPreviewImage(equippedBodyTier, CarImageDirection.Right),
+        SpriteKind.PlayerVisual
+    )
+    preview.setFlag(SpriteFlag.Ghost, true)
+    preview.setFlag(SpriteFlag.RelativeToCamera, true)
+    preview.setPosition(98, 47)
+    preview.z = 90
+
+    let leaveCustomizeMenu = false
+    while (!leaveCustomizeMenu && garageIsOpen) {
+        let primaryChoice = "Primary: " + paintColorName(equippedPrimaryColor)
+        let secondaryChoice = "Secondary: " + paintColorName(equippedSecondaryColor)
+        let accentChoice = "Accent: " + paintColorName(equippedAccentColor)
+        story.showPlayerChoices(primaryChoice, secondaryChoice, accentChoice, "Back")
+
+        if (story.checkLastAnswer(primaryChoice)) {
+            customizePaintPart(CarPaintPart.Primary)
+        } else if (story.checkLastAnswer(secondaryChoice)) {
+            customizePaintPart(CarPaintPart.Secondary)
+        } else if (story.checkLastAnswer(accentChoice)) {
+            customizePaintPart(CarPaintPart.Accent)
+        } else {
+            leaveCustomizeMenu = true
+        }
+
+        preview.setImage(playerCarPreviewImage(equippedBodyTier, CarImageDirection.Right))
+    }
+
+    preview.destroy()
+}
+
+/** Runs the paint purchase and car customization shop. */
+function showPaintMenu() {
+    let leavePaintMenu = false
+
+    while (!leavePaintMenu && garageIsOpen) {
+        setGarageBackground("main")
+        story.showPlayerChoices("Buy Paint", "Customize Car", "Back")
+
+        if (story.checkLastAnswer("Buy Paint")) {
+            showBuyPaintMenu()
+        } else if (story.checkLastAnswer("Customize Car")) {
+            showCustomizeCarMenu()
+        } else {
+            leavePaintMenu = true
         }
     }
 }
@@ -255,24 +459,14 @@ function showGarage() {
 
     while (garageIsOpen) {
         setGarageBackground("main")
-        let engineName = engineNames[equippedEngineTier]
-        let wheelName = wheelNames[equippedWheelTier]
-        let bodyName = bodyNames[equippedBodyTier]
-        story.showPlayerChoices(
-            "Engine: " + engineName,
-            "Wheels: " + wheelName,
-            "Body: " + bodyName,
-            "More"
-        )
+        story.showPlayerChoices("Parts", "Paint", "Start Race")
 
-        if (story.checkLastAnswer("Engine: " + engineName)) {
-            chooseEngine()
-        } else if (story.checkLastAnswer("Wheels: " + wheelName)) {
-            chooseWheels()
-        } else if (story.checkLastAnswer("Body: " + bodyName)) {
-            chooseBody()
+        if (story.checkLastAnswer("Parts")) {
+            showPartsMenu()
+        } else if (story.checkLastAnswer("Paint")) {
+            showPaintMenu()
         } else {
-            showMoreGarageOptions()
+            chooseDrivingMode()
         }
     }
 }

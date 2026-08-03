@@ -1,44 +1,6 @@
-// Player movement and appearance
-//
-// Car images are stored in this order so the direction indexes remain simple:
-// up, down, left, right.
-enum CarImageDirection {
-    Up,
-    Down,
-    Left,
-    Right
-}
+// Player movement and collision
 
-// Authored body assets are ordered up, down, left, right.
-let carBody1Images = [
-    assets.image`body1Up`,
-    assets.image`body1Down`,
-    assets.image`body1Left`,
-    assets.image`body1Right`
-]
-let carBody2Images = [
-    assets.image`body2Up`,
-    assets.image`body2Down`,
-    assets.image`body2Left`,
-    assets.image`body2Right`
-]
-let carBody3Images = [
-    assets.image`body3Up`,
-    assets.image`body3Down`,
-    assets.image`body3Left`,
-    assets.image`body3Right`
-]
-
-let allCarBodyImages = [
-    carBody1Images,
-    carBody2Images,
-    carBody3Images
-]
-let activeCarBodyImages = carBody1Images
-let currentCarImageDirection = CarImageDirection.Up
-let currentCarBodyIndex = -1
 let playerReversing = false
-let playerCarVisual: Sprite = null
 
 // The authored car is 24 pixels long, but a race lane is only 16 pixels wide.
 // This hidden square is the physical car; playerCarVisual draws the full car.
@@ -57,83 +19,25 @@ let playerCollisionImage = img`
 
 /**
  * Creates the player's hidden hitbox and visible car as one layered pair.
- * @param playerImage Initial directional image for the visible car.
  * @param direction Initial facing direction. Defaults to right.
  */
-function createPlayer(playerImage: Image, direction?: CarImageDirection) {
-    currentCarBodyIndex = equippedBodyTier
-    activeCarBodyImages = allCarBodyImages[equippedBodyTier]
-    currentCarImageDirection = direction == null ? CarImageDirection.Right : direction
+function createPlayer(direction?: CarImageDirection) {
     playerReversing = false
 
     player = sprites.create(playerCollisionImage, SpriteKind.Player)
     player.setFlag(SpriteFlag.Invisible, true)
     player.z = 10
 
-    playerCarVisual = sprites.create(playerImage, SpriteKind.PlayerVisual)
-    playerCarVisual.setFlag(SpriteFlag.Ghost, true)
-    playerCarVisual.z = player.z + 1
+    createPlayerRendering(direction)
 
     return player
 }
 
 /** Destroys both halves of the player car. */
 function destroyPlayer() {
-    playerCarVisual.destroy()
-    playerCarVisual = null
+    destroyPlayerRendering()
     player.destroy()
     player = null
-}
-
-/**
- * Synchronizes the visible car with the hidden collision sprite.
- * It selects the equipped body and faces the strongest velocity axis unless
- * the car is reversing.
- */
-function updatePlayerCarImage() {
-    if (equippedBodyTier != currentCarBodyIndex) {
-        currentCarBodyIndex = equippedBodyTier
-        activeCarBodyImages = allCarBodyImages[equippedBodyTier]
-    }
-
-    // Reversing changes velocity but not the direction the car is facing.
-    if (!playerReversing) {
-        if (Math.abs(player.vx) > Math.abs(player.vy)) {
-            if (player.vx > 1) {
-                currentCarImageDirection = CarImageDirection.Right
-            } else if (player.vx < -1) {
-                currentCarImageDirection = CarImageDirection.Left
-            }
-        } else {
-            if (player.vy > 1) {
-                currentCarImageDirection = CarImageDirection.Down
-            } else if (player.vy < -1) {
-                currentCarImageDirection = CarImageDirection.Up
-            }
-        }
-    }
-
-    playerCarVisual.setImage(activeCarBodyImages[currentCarImageDirection])
-    playerCarVisual.setPosition(player.x, player.y)
-    playerCarVisual.z = player.z + 1
-}
-
-function playerCarFacingX() {
-    if (currentCarImageDirection == CarImageDirection.Right) {
-        return 1
-    } else if (currentCarImageDirection == CarImageDirection.Left) {
-        return -1
-    }
-    return 0
-}
-
-function playerCarFacingY() {
-    if (currentCarImageDirection == CarImageDirection.Down) {
-        return 1
-    } else if (currentCarImageDirection == CarImageDirection.Up) {
-        return -1
-    }
-    return 0
 }
 
 /**
