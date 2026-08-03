@@ -25,43 +25,43 @@ The car can be upgraded in four categories:
 - **A:** Brake.
 - **B:** Leave Free Roam and return to the Garage. The B button intentionally has no effect during a race.
 
-## Script Responsibilities
+## Game Files
 
-### `main.ts`
+### `ai_racers.ts`
 
-Defines the player's session metadata, including cash, wins, and races completed. It recalculates the initial car statistics and controls the opening sequence, start menu, introductory text, first Garage visit, and launch of the selected driving mode.
+Owns the AI race subsystem. It chooses opponent count, speed, body tier, and randomized colors from the selected difficulty; creates and removes opponents; steers them through track waypoints; updates their directional artwork; and tracks their checkpoint and lap progress. An opponent that completes the required laps reports a race loss to the shared race-result flow.
 
-### `sprite_kinds.ts`
+### `freeroam_world.ts`
 
-Defines the custom sprite kinds shared by the game's systems. These identify cars, AI racers, minimap HUD elements, and the visible portion of the player's car.
-
-### `player_stats.ts`
-
-Contains the car-part catalog and the player's loadout state. It defines part names, prices, ownership, equipped tiers, and the rating values supplied by each engine, wheel, body, and brake tier.
-
-### `player_stat_calculations.ts`
-
-Converts the equipped parts into derived car statistics and movement values. It calculates top speed, acceleration, braking, durability, body efficiency, reverse performance, and speed-dependent steering response.
-
-### `player_movement.ts`
-
-Creates and destroys the player's car and handles its frame-by-frame driving physics. It manages acceleration, coasting, braking, reversing, gradual steering, cornering speed loss, directional car images, and synchronization between the hidden collision sprite and the larger visible car sprite.
-
-### `player_health.ts`
-
-Implements race durability and collision damage. It creates the durability HUD, applies damage from walls and AI racers, adds collision cooldowns and bounce effects, detects when the player's car is wrecked, and ends the current race after durability reaches zero. Wall impacts produce sound in both races and Free Roam, but only races use durability damage.
-
-### `vehicle_sounds.ts`
-
-Defines and plays the player's vehicle sound effects. It handles engine pulses during acceleration, tire noise while turning, wall-crash sounds, and cooldown timing that prevents driving sounds from overlapping excessively.
+Defines the Forest, Highway, and Cave Free Roam themes. It clones the selected authored map, randomizes theme-specific scenery while protecting the spawn area and important routes, installs the temporary map, and releases its stored state on exit. It also handles the B-button transition from Free Roam back to the Garage.
 
 ### `garage.ts`
 
-Controls the Garage menus and the game's upgrade economy. It displays parts and car statistics, purchases and equips upgrades, subtracts cash, enforces win requirements, selects race difficulty or Free Roam theme, records race results, awards prizes, and returns the player to the appropriate driving mode after the Garage closes.
+Owns the Garage interface and progression economy. It changes Garage backgrounds, displays part and statistics menus, purchases and equips upgrades, enforces race and Free Roam unlock requirements, and stores the player's next driving selection. It also records completed races, awards cash and wins, and runs Garage visits inside storytelling cutscenes before launching the selected mode.
+
+### `main.ts`
+
+Defines session-level values such as cash, wins, races completed, and the shared player sprite reference. It calculates the initial vehicle statistics, clears the initial tilemap, runs the start menu and introduction, opens the first Garage visit, and launches the first selected driving mode.
+
+### `player_health.ts`
+
+Implements race durability and collision damage. It creates and removes the durability HUD, applies damage from walls and AI racers with collision cooldowns, separates colliding vehicles, detects a wrecked player car, and reports wrecks to the shared race-result flow. Wall impacts play sound in both driving modes, but durability damage applies only during races.
+
+### `player_movement.ts`
+
+Owns the player's two-part car representation: a hidden collision sprite and a larger visible body sprite. It creates, destroys, and synchronizes those sprites; selects directional body artwork; and performs frame-by-frame acceleration, coasting, braking, reversing, steering, and cornering calculations while a driving mode is active.
+
+### `player_stat_calculations.ts`
+
+Converts the equipped part ratings into the vehicle values used by gameplay. It calculates speed, acceleration, braking, durability, body efficiency, reverse performance, and speed-sensitive steering response whenever the loadout changes.
+
+### `player_stats.ts`
+
+Contains the vehicle-part catalog and persistent loadout state for the current session. It defines part names, prices, ownership, equipped tiers, and the raw ratings supplied by each engine, wheel, body, and brake tier.
 
 ### `race.ts`
 
-Controls the lifecycle of races and Free Roam sessions. It defines driving modes and race difficulties, loads the selected map, configures laps, prizes and time limits, creates the player, starts supporting systems, updates the race minimap, tracks checkpoints and completed laps, handles the countdown, determines race results, and cleans up before returning to the Garage.
+Coordinates both Race and Free Roam sessions. It defines the available modes and difficulties, loads race maps, configures laps, prizes, time limits, player systems, countdowns, and the race minimap, and tracks player checkpoints and laps. Race results are deferred into a storytelling cutscene so collision processing finishes before `leaveForGarage` removes the player and tilemap; the same cleanup function performs mode-specific shutdown before the Garage opens.
 
 Current race settings are:
 
@@ -71,13 +71,13 @@ Current race settings are:
 | Intermediate | 2 | $200 | 55 seconds | 3 |
 | Expert | 3 | $500 | 65 seconds | 4 |
 
-### `ai_racers.ts`
+### `sprite_kinds.ts`
 
-Creates, updates, and removes race opponents. It selects opponent body tiers and randomized colors, varies opponent count and speed by difficulty, steers racers around the track using waypoints, updates their directional images, tracks their checkpoint and lap progress, and ends the race if an opponent finishes first.
+Declares the custom sprite kinds shared across the project, including AI racers, the visible player-car sprite, and minimap HUD sprites.
 
-### `freeroam_world.ts`
+### `vehicle_sounds.ts`
 
-Defines the Forest, Highway, and Cave Free Roam themes. It clones the selected authored map and adds randomized theme-appropriate scenery and obstacles while preserving the spawn area and important travel routes. It also clears the temporary map state when the player leaves the driving session.
+Defines the acceleration, turning, and wall-impact sound effects used by the player's car. It exposes playback helpers and manages a shared cooldown so short driving sounds do not overlap excessively.
 
 ## MakeCode Dependencies
 
