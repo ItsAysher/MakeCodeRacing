@@ -160,3 +160,11 @@ function loadSelectedFreeRoamMap() {
 function clearFreeRoamMapState() {
     activeFreeRoamMap = null
 }
+
+// B exits Free Roam
+controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (freeRoamInProgress) {
+        leaveForGarage()
+        openGarage(startSelectedDrivingMode)
+    }
+})

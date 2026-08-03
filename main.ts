@@ -43,4 +43,5 @@ function runStartingSequence() {
     })
 }
 
+tiles.setCurrentTilemap(null)
 runStartingSequence()

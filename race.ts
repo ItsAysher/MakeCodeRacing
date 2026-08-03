@@ -138,9 +138,6 @@ function startNextRace() {
  * Initializes the selected randomized Free Roam map without race-only systems.
  */
 function startFreeRoam() {
-    stopAIRaceSystems()
-    stopPlayerRaceHealth()
-    raceInProgress = false
     freeRoamInProgress = true
     checkpointArmed = false
 
@@ -154,14 +151,6 @@ function startFreeRoam() {
     tiles.placeOnTile(player, tiles.getTileLocation(16, 16))
     startPlayerMovement()
     scene.cameraFollowSprite(player)
-
-    info.stopCountdown()
-    info.setScore(0)
-    info.showScore(false)
-
-    if (raceMinimap) {
-        raceMinimap.setFlag(SpriteFlag.Invisible, true)
-    }
 
     game.splash(freeRoamThemeName() + " FREE ROAM", "Drive freely. Press B to return to the Garage.")
 }
@@ -177,40 +166,45 @@ function completeCurrentRace(won: boolean) {
 
     let timedOut = info.countdown() <= 0
     let carWrecked = isPlayerCarWrecked()
-    leaveRaceForGarage()
 
-    if (won) {
-        game.splash("YOU WIN!", "Prize: $" + racePrize)
-    } else if (carWrecked) {
-        game.splash("CAR WRECKED", "Upgrade durability or avoid collisions.")
-    } else if (timedOut) {
-        game.splash("TIME UP", "Return to the garage and try again.")
-    } else {
-        game.splash("RACE LOST", "An opponent finished first.")
-    }
+    // result flow in a cutscene so cleanup happens after that callback returns.
+    story.startCutscene(function () {
+        if (won) {
+            game.splash("YOU WIN!", "Prize: $" + racePrize)
+        } else if (carWrecked) {
+            game.splash("CAR WRECKED", "Upgrade durability or avoid collisions.")
+        } else if (timedOut) {
+            game.splash("TIME UP", "Return to the garage and try again.")
+        } else {
+            game.splash("RACE LOST", "An opponent finished first.")
+        }
 
-    finishRace(won, won ? racePrize : 0)
+        leaveForGarage()
+        finishRace(won, won ? racePrize : 0)
+    })
 }
 
 /**
- * Clears active driving systems and restores the neutral Garage scene state.
+ * Clears the active driving mode and restores the neutral Garage scene state.
  */
-function leaveRaceForGarage() {
-    stopAIRaceSystems()
-    stopPlayerRaceHealth()
-    raceInProgress = false
-    freeRoamInProgress = false
+function leaveForGarage() {
+    if (freeRoamInProgress) {
+        freeRoamInProgress = false
+        clearFreeRoamMapState()
+    } else if (raceInProgress) {
+        stopAIRaceSystems()
+        stopPlayerRaceHealth()
+        info.stopCountdown()
+        info.setScore(0)
+        info.showScore(false)
+        raceMinimap.setFlag(SpriteFlag.Invisible, true)
+        raceInProgress = false
+    }
+
     checkpointArmed = false
     destroyPlayer()
-    clearFreeRoamMapState()
     scene.centerCameraAt(80, 60)
-    info.stopCountdown()
-    info.setScore(0)
-    info.showScore(false)
-
-    if (raceMinimap) {
-        raceMinimap.setFlag(SpriteFlag.Invisible, true)
-    }
+    tiles.setCurrentTilemap(null)
 }
 
 // Arms the player to complete a lap after crossing the finish line.
@@ -241,14 +235,6 @@ scene.onOverlapTile(SpriteKind.Player, assets.tile`raceFinishTile`, function (sp
 info.onCountdownEnd(function () {
     if (raceInProgress) {
         completeCurrentRace(false)
-    }
-})
-
-// B exits Free Roam but intentionally has no action during a race.
-controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (freeRoamInProgress) {
-        leaveRaceForGarage()
-        openGarage(startSelectedDrivingMode)
     }
 })
 
