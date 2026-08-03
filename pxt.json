@@ -24,6 +24,7 @@
         "player_health.ts",
         "freeroam_world.ts",
         "race.ts",
+        "minimap.ts",
         "ai_racers.ts",
         "garage.ts",
         "main.ts",

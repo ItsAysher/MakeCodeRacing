@@ -1,6 +1,77 @@
 let aiRaceSystemsActive = false
 let aiRacers: Sprite[] = []
 
+// Ordered tile locations that keep each opponent near the center of the road.
+// The last location must lead back through the finish line to the first one.
+let beginnerAICheckpoints = [
+    [25, 14],
+    [25, 5],
+    [4, 5],
+    [4, 14]
+]
+let intermediateAICheckpoints = [
+    [44, 28],
+    [44, 23],
+    [31, 23],
+    [31, 16],
+    [44, 16],
+    [44, 7],
+    [7, 7],
+    [7, 11],
+    [14, 18],
+    [6, 23],
+    [7, 28]
+]
+let expertAICheckpoints = [
+    [65, 46],
+    [65, 36],
+    [51, 36],
+    [51, 27],
+    [66, 27],
+    [66, 4],
+    [53, 4],
+    [53, 18],
+    [44, 18],
+    [44, 4],
+    [27, 4],
+    [35, 11],
+    [31, 18],
+    [17, 5],
+    [3, 5],
+    [3, 12],
+    [25, 30],
+    [25, 37],
+    [15, 39],
+    [11, 29],
+    [4, 29],
+    [4, 46]
+]
+
+function aiCheckpointsForSelectedRace() {
+    if (selectedRace == RaceDifficulty.Expert) {
+        return expertAICheckpoints
+    } else if (selectedRace == RaceDifficulty.Intermediate) {
+        return intermediateAICheckpoints
+    }
+    return beginnerAICheckpoints
+}
+
+function aiStartingColumn() {
+    if (selectedRace == RaceDifficulty.Expert) {
+        return 32
+    }
+    return 8
+}
+
+function aiStartingRow() {
+    if (selectedRace == RaceDifficulty.Expert) {
+        return 45
+    } else if (selectedRace == RaceDifficulty.Intermediate) {
+        return 28
+    }
+    return 14
+}
+
 // These speeds sit below the approximate maximum speed of the matching car
 // build: starter 55, intermediate 95, and expert 150.
 function aiSpeedForSelectedRace() {
@@ -87,6 +158,8 @@ function updateAIRacerImage(racer: Sprite) {
  */
 function createAIRacers() {
     let count = aiCountForSelectedRace()
+    let startingColumn = aiStartingColumn()
+    let startingRow = aiStartingRow()
 
     for (let index = 0; index < count; index++) {
         let racerImages = createAIRacerImages()
@@ -101,8 +174,8 @@ function createAIRacers() {
 
         // Stagger opponents behind and across the starting lane so none begin
         // overlapping the player.
-        racer.x = (8 - index % 2 * 2) * 16 + 8
-        racer.y = (14 + index % 2) * 16 + 8
+        racer.x = (startingColumn - index % 2 * 2) * 16 + 8
+        racer.y = (startingRow + index % 2) * 16 + 8
         racer.z = player.z
         aiRacers.push(racer)
     }
@@ -115,19 +188,23 @@ function createAIRacers() {
  * @param deltaTime Seconds elapsed since the previous frame.
  */
 function updateAIRacer(racer: Sprite, deltaTime: number) {
-    // Waypoints follow the center of the rectangular authored race loop:
-    // bottom-right, top-right, top-left, bottom-left.
-    let waypointColumns = [25, 25, 4, 4]
-    let waypointRows = [14, 5, 5, 14]
+    let checkpoints = aiCheckpointsForSelectedRace()
+    if (checkpoints.length == 0) {
+        racer.vx = 0
+        racer.vy = 0
+        return
+    }
+
     let waypoint: number = racer.data.waypoint
-    let targetX = waypointColumns[waypoint] * 16 + 8
-    let targetY = waypointRows[waypoint] * 16 + 8
+    let targetX = checkpoints[waypoint][0] * 16 + 8
+    let targetY = checkpoints[waypoint][1] * 16 + 8
     let offsetX = targetX - racer.x
     let offsetY = targetY - racer.y
     let distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY)
 
     if (distance < 10) {
-        racer.data.waypoint = (waypoint + 1) % waypointColumns.length
+        // Wrapping to zero starts the same ordered route for the next lap.
+        racer.data.waypoint = (waypoint + 1) % checkpoints.length
         return
     }
 

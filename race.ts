@@ -18,7 +18,6 @@ let raceLap = 0
 let raceLapTarget = 1
 let racePrize = 0
 let raceTimeLimit = 0
-let raceMinimap: Sprite = null
 
 function loadSelectedRaceMap() {
     if (selectedRace == RaceDifficulty.Expert) {
@@ -36,13 +35,13 @@ function loadSelectedRaceMap() {
 function configureRaceDifficulty() {
     if (selectedRace == RaceDifficulty.Expert) {
         raceLapTarget = 3
-        // Two Expert wins buy one Tier 3 part.
-        racePrize = 500
-        raceTimeLimit = 65
+        // One Expert win buys one Tier 3 part + a paint
+        racePrize = 1300
+        raceTimeLimit = 120
     } else if (selectedRace == RaceDifficulty.Intermediate) {
         raceLapTarget = 2
-        // Five Intermediate wins buy one Tier 3 part.
-        racePrize = 200
+        // Two Intermediate wins buy one Tier 3 part.
+        racePrize = 500
         raceTimeLimit = 55
     } else {
         raceLapTarget = 1
@@ -56,31 +55,6 @@ function configureRaceBackground() {
     scene.setBackgroundColor(7)
 }
 
-/**
- * Rebuilds the minimap image and keeps its camera-relative HUD sprite current.
- * The sprite is created lazily on the first race update.
- */
-function updateRaceMinimap() {
-    if (!raceInProgress) {
-        return
-    }
-
-    let map = minimap.minimap(MinimapScale.Eighth, 1, 1)
-    minimap.includeSprite(map, playerCarVisual)
-
-    if (!raceMinimap) {
-        raceMinimap = sprites.create(minimap.getImage(map), SpriteKind.MinimapHud)
-        raceMinimap.setFlag(SpriteFlag.RelativeToCamera, true)
-        raceMinimap.setFlag(SpriteFlag.Ghost, true)
-        raceMinimap.z = 100
-        raceMinimap.right = 158
-        raceMinimap.bottom = 118
-    } else {
-        raceMinimap.setImage(minimap.getImage(map))
-        raceMinimap.setFlag(SpriteFlag.Invisible, false)
-    }
-}
-
 function raceName() {
     if (selectedRace == RaceDifficulty.Expert) {
         return "EXPERT"
@@ -88,6 +62,15 @@ function raceName() {
         return "INTERMEDIATE"
     }
     return "BEGINNER"
+}
+
+function playerRaceStartingLocation() {
+    if (selectedRace == RaceDifficulty.Expert) {
+        return tiles.getTileLocation(35, 45)
+    } else if (selectedRace == RaceDifficulty.Intermediate) {
+        return tiles.getTileLocation(11, 28)
+    }
+    return tiles.getTileLocation(11, 14)
 }
 
 /**
@@ -115,7 +98,7 @@ function startNextRace() {
     raceInProgress = true
 
     createPlayer(CarImageDirection.Right)
-    tiles.placeOnTile(player, tiles.getTileLocation(11, 14))
+    tiles.placeOnTile(player, playerRaceStartingLocation())
     startPlayerMovement()
     startPlayerRaceHealth()
     startAIRaceSystems()
@@ -188,7 +171,7 @@ function leaveForGarage() {
         info.stopCountdown()
         info.setScore(0)
         info.showScore(false)
-        raceMinimap.setFlag(SpriteFlag.Invisible, true)
+        hideRaceMinimap()
         raceInProgress = false
     }
 
@@ -227,8 +210,4 @@ info.onCountdownEnd(function () {
     if (raceInProgress) {
         completeCurrentRace(false)
     }
-})
-
-game.onUpdateInterval(500, function () {
-    updateRaceMinimap()
 })
