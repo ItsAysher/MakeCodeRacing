@@ -1,12 +1,4 @@
-// Metadata
-let cash = 0
-let wins = 0
-let racesRaced = 0
-
 recalculatePlayerStats()
-
-// Driving modes create and destroy their own player sprite.
-let player: Sprite = null
 
 /**
  * Blocks the opening sequence until the player starts or reads the instructions.
@@ -35,7 +27,7 @@ function runStartingSequence() {
         showStartMenu()
 
         // The first Garage visit happens after both the opening cutscene and
-        // start menu. Later visits are triggered by finishRace.
+        // start menu. Driving-session results trigger later visits.
         let previousBackground = scene.backgroundImage()
         showGarage()
         scene.setBackgroundImage(previousBackground)
@@ -43,5 +35,4 @@ function runStartingSequence() {
     })
 }
 
-tiles.setCurrentTilemap(null)
 runStartingSequence()

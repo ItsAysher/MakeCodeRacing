@@ -29,35 +29,63 @@ The car can be upgraded in four categories:
 
 ### `ai_racers.ts`
 
-Owns the AI race subsystem. It chooses opponent count, speed, body tier, and randomized colors from the selected difficulty; creates and removes opponents; steers them through track waypoints; updates their directional artwork; and tracks their checkpoint and lap progress. An opponent that completes the required laps reports a race loss to the shared race-result flow.
+Owns the AI race subsystem. It consumes the active race definition, creates and removes opponents, applies randomized paint, steers racers through the cached track route, switches their directional images, and tracks checkpoint and lap progress.
 
-### `freeroam_world.ts`
+### `car_assets.ts`
 
-Defines the Forest, Highway, and Cave Free Roam themes. It clones the selected authored map, randomizes theme-specific scenery while protecting the spawn area and important routes, installs the temporary map, and releases its stored state on exit. It also handles the B-button transition from Free Roam back to the Garage.
-
-### `garage.ts`
-
-Owns the Garage interface and progression economy. Its main menu routes to the parts shop, paint shop, and driving-mode selection. It changes Garage backgrounds, displays part and statistics menus, purchases and equips upgrades and paints, enforces race and Free Roam unlock requirements, and stores the player's next driving selection. It also records completed races, awards cash and wins, and runs Garage visits inside storytelling cutscenes before launching the selected mode.
-
-### `main.ts`
-
-Defines session-level values such as cash, wins, races completed, and the shared player sprite reference. It calculates the initial vehicle statistics, clears the initial tilemap, runs the start menu and introduction, opens the first Garage visit, and launches the first selected driving mode.
-
-### `player_health.ts`
-
-Implements race durability and collision damage. It creates and removes the durability HUD, applies damage from walls and AI racers with collision cooldowns, separates colliding vehicles, detects a wrecked player car, and reports wrecks to the shared race-result flow. Wall impacts play sound in both driving modes, but durability damage applies only during races.
-
-### `player_movement.ts`
-
-Owns the player's hidden collision sprite and performs frame-by-frame acceleration, coasting, braking, reversing, steering, and cornering calculations while a driving mode is active. It delegates the visible car artwork to the player renderer.
-
-### `player_rendering.ts`
-
-Owns the player's visible car sprite, all directional body and color-layer image arrays, image compositing, and the logic that switches artwork when the equipped body or driving direction changes.
+Catalogs every base body image and primary, secondary, and accent paint layer in directional order. Both player rendering and AI appearance use these shared image arrays.
 
 ### `customization.ts`
 
-Contains the paint catalog, ownership and equipped-color state, body-specific source-color mappings, and the recoloring logic used by both the driving renderer and Garage car preview.
+Contains the paint catalog, ownership and equipped-color state, body-specific source-color mappings, and recoloring operations used by the player image cache and Garage previews.
+
+### `freeroam_world.ts`
+
+Defines the Forest, Highway, and Cave Free Roam themes. It clones the selected authored map, randomizes theme-specific scenery while protecting the spawn area and important routes, creates the Free Roam player, and handles the B-button return to the Garage.
+
+### `game_flow.ts`
+
+Defines the selected driving mode and the single authoritative driving-session state. It launches Race or Free Roam and performs shared player, camera, and tilemap cleanup when a session ends.
+
+### `garage.ts`
+
+Owns the main Garage navigation. It routes to Parts, Paint, Player Stats, and driving-mode selection. Player Stats displays cash, wins, and races raced.
+
+### `garage_core.ts`
+
+Contains shared Garage state, background selection, extended and paginated menu helpers, and the cutscene wrapper used to open the Garage and launch the next driving mode.
+
+### `garage_mode_selection.ts`
+
+Handles Beginner, Intermediate, Expert, and Free Roam selection. It enforces win requirements and stores the selected race difficulty, Free Roam theme, and driving mode.
+
+### `garage_paint.ts`
+
+Implements paint purchasing, paginated paint selection, primary/secondary/accent customization, and the cached Garage car preview.
+
+### `garage_parts.ts`
+
+Implements part labels, purchasing, equipping, shared category-selection logic, the parts menu, and the vehicle-performance statistics screen.
+
+### `main.ts`
+
+Calculates the initial vehicle statistics, runs the start menu and placeholder introduction, opens the first Garage visit, and launches the first selected driving mode.
+
+### `minimap.ts`
+
+Owns the race minimap HUD. It caches the full static track image once per race, reuses a fixed viewport image, redraws only when the player changes minimap position or appearance, and releases the large track cache when the race ends.
+
+### `player_health.ts`
+
+Implements race durability and collision damage. It creates and removes the durability HUD, applies damage with collision cooldowns, separates colliding vehicles, detects wrecks, and reports them to the race-result flow. Wall impacts play sound in both driving modes, but durability damage applies only during races.
+
+### `player_movement.ts`
+
+Owns the shared player sprite and hidden collision image. It creates and destroys the player, performs acceleration, coasting, braking, reversing, steering, and cornering calculations, and delegates visible artwork to the renderer.
+
+### `player_rendering.ts`
+
+Owns the visible player-car sprite, customization compositing, directional image cache, direction detection, and synchronization with the hidden collision sprite. Its four cached images rebuild only after a body or paint change.
 
 ### `player_stat_calculations.ts`
 
@@ -67,17 +95,25 @@ Converts the equipped part ratings into the vehicle values used by gameplay. It 
 
 Contains the vehicle-part catalog and persistent loadout state for the current session. It defines part names, prices, ownership, equipped tiers, and the raw ratings supplied by each engine, wheel, body, and brake tier.
 
+### `progression.ts`
+
+Owns cash, wins, races raced, and race-result bookkeeping for the current session.
+
 ### `race.ts`
 
-Coordinates both Race and Free Roam sessions. It defines the available modes and difficulties, loads race maps, configures laps, prizes, time limits, player systems, countdowns, and the race minimap, and tracks player checkpoints and laps. Race results are deferred into a storytelling cutscene so collision processing finishes before `leaveForGarage` removes the player and tilemap; the same cleanup function performs mode-specific shutdown before the Garage opens.
+Owns race startup, player lap progress, race-only cleanup, and result presentation. It changes the session state before showing results so simultaneous finish, timeout, and wreck events cannot record a race more than once.
+
+### `race_definitions.ts`
+
+Stores the complete authored configuration for each difficulty: map, name, player and AI spawns, lap target, prize, timer, opponent count and speed, body tier, paint source colors, and AI route.
 
 Current race settings are:
 
 | Difficulty | Laps | Prize | Time limit | Opponents |
 | --- | ---: | ---: | ---: | ---: |
 | Beginner | 1 | $100 | 40 seconds | 2 |
-| Intermediate | 2 | $200 | 55 seconds | 3 |
-| Expert | 3 | $500 | 65 seconds | 4 |
+| Intermediate | 2 | $500 | 55 seconds | 3 |
+| Expert | 3 | $1300 | 120 seconds | 4 |
 
 ### `sprite_kinds.ts`
 

@@ -55,7 +55,9 @@ function stopPlayerRaceHealth() {
  * @param amount Durability points to remove.
  */
 function damagePlayerCar(amount: number) {
-    if (!raceInProgress || !playerHealthBar || playerCarWrecked) {
+    if (drivingSessionState != DrivingSessionState.Race ||
+        !playerHealthBar ||
+        playerCarWrecked) {
         return
     }
 
@@ -75,12 +77,13 @@ function isPlayerCarWrecked() {
 
 // Damages and separates colliding cars, with a cooldown to prevent rapid hits.
 sprites.onOverlap(SpriteKind.Player, SpriteKind.AIRacer, function (playerSprite, racer) {
-    if (!raceInProgress ||
-        control.millis() - lastPlayerRacerDamageTime < 700) {
+    let now = control.millis()
+    if (drivingSessionState != DrivingSessionState.Race ||
+        now - lastPlayerRacerDamageTime < 700) {
         return
     }
 
-    lastPlayerRacerDamageTime = control.millis()
+    lastPlayerRacerDamageTime = now
     damagePlayerCar(12)
 
     // Bounce the cars apart so a single crash does not pin them together.
@@ -92,15 +95,17 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.AIRacer, function (playerSprite,
 
 // Applies wall damage at most once per cooldown interval.
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
-    if ((!raceInProgress && !freeRoamInProgress) ||
-        control.millis() - lastPlayerWallImpactTime < 600) {
+    let now = control.millis()
+    if ((drivingSessionState != DrivingSessionState.Race &&
+        drivingSessionState != DrivingSessionState.FreeRoam) ||
+        now - lastPlayerWallImpactTime < 600) {
         return
     }
 
-    lastPlayerWallImpactTime = control.millis()
+    lastPlayerWallImpactTime = now
     playPlayerWallCrashSound()
 
-    if (raceInProgress) {
+    if (drivingSessionState == DrivingSessionState.Race) {
         damagePlayerCar(8)
     }
 })

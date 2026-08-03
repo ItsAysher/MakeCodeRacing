@@ -5,7 +5,6 @@ enum FreeRoamTheme {
 }
 
 let selectedFreeRoamTheme = FreeRoamTheme.Forest
-let activeFreeRoamMap: tiles.TileMapData = null
 
 function freeRoamThemeName(): string {
     if (selectedFreeRoamTheme == FreeRoamTheme.Highway) {
@@ -152,19 +151,32 @@ function randomizeFreeRoamDecorations(map: tiles.TileMapData) {
  * Cloning prevents randomized changes from modifying the authored asset.
  */
 function loadSelectedFreeRoamMap() {
-    activeFreeRoamMap = tileUtil.cloneMap(selectedFreeRoamBaseMap())
-    tiles.setCurrentTilemap(activeFreeRoamMap)
-    randomizeFreeRoamDecorations(activeFreeRoamMap)
+    let freeRoamMap = tileUtil.cloneMap(selectedFreeRoamBaseMap())
+    tiles.setCurrentTilemap(freeRoamMap)
+    randomizeFreeRoamDecorations(freeRoamMap)
 }
 
-function clearFreeRoamMapState() {
-    activeFreeRoamMap = null
+/** Initializes the selected randomized Free Roam map and player. */
+function startFreeRoam() {
+    drivingSessionState = DrivingSessionState.FreeRoam
+    loadSelectedFreeRoamMap()
+    scene.setBackgroundColor(7)
+
+    createPlayer(CarImageDirection.Right)
+    tiles.placeOnTile(player, tiles.getTileLocation(16, 16))
+    startPlayerMovement()
+    scene.cameraFollowSprite(player)
+
+    game.splash(
+        freeRoamThemeName() + " FREE ROAM",
+        "Drive freely. Press B to return to the Garage."
+    )
 }
 
 // B exits Free Roam
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (freeRoamInProgress) {
-        leaveForGarage()
+    if (drivingSessionState == DrivingSessionState.FreeRoam) {
+        leaveCurrentDrivingSession()
         openGarage(startSelectedDrivingMode)
     }
 })

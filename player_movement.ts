@@ -1,8 +1,11 @@
 // Player movement and collision
 
+// Driving modes create and destroy their own player sprite.
+let player: Sprite = null
 let playerReversing = false
+let playerCoastingDeceleration = 9
+let playerShiftSpeed = 6
 
-// The authored car is 24 pixels long, but a race lane is only 16 pixels wide.
 // This hidden square is the physical car; playerCarVisual draws the full car.
 let playerCollisionImage = img`
     1 1 1 1 1 1 1 1 1 1
@@ -17,11 +20,23 @@ let playerCollisionImage = img`
     1 1 1 1 1 1 1 1 1 1
 `
 
+/** Reduces velocity magnitude without changing the current travel direction. */
+function slowPlayerBy(currentSpeed: number, speedReduction: number) {
+    let newSpeed = Math.max(0, currentSpeed - speedReduction)
+
+    if (currentSpeed > 0) {
+        player.vx = player.vx * newSpeed / currentSpeed
+        player.vy = player.vy * newSpeed / currentSpeed
+    }
+
+    return newSpeed
+}
+
 /**
  * Creates the player's hidden hitbox and visible car as one layered pair.
- * @param direction Initial facing direction. Defaults to right.
+ * @param direction Initial facing direction.
  */
-function createPlayer(direction?: CarImageDirection) {
+function createPlayer(direction: CarImageDirection) {
     playerReversing = false
 
     player = sprites.create(playerCollisionImage, SpriteKind.Player)
@@ -63,12 +78,7 @@ function updatePlayerMovement() {
     // A brakes along the current direction of travel.
     if (controller.A.isPressed()) {
         let braking = playerBrakingDeceleration * deltaTime
-        let newSpeed = Math.max(0, currentSpeed - braking)
-
-        if (currentSpeed > 0) {
-            player.vx = player.vx * newSpeed / currentSpeed
-            player.vy = player.vy * newSpeed / currentSpeed
-        }
+        slowPlayerBy(currentSpeed, braking)
         return
     }
 
@@ -80,13 +90,7 @@ function updatePlayerMovement() {
 
     if (inputLength == 0) {
         // Coasting drag slows the car without changing its direction.
-        let coasting = 9 * deltaTime
-        let newSpeed = Math.max(0, currentSpeed - coasting)
-
-        if (currentSpeed > 0) {
-            player.vx = player.vx * newSpeed / currentSpeed
-            player.vy = player.vy * newSpeed / currentSpeed
-        }
+        slowPlayerBy(currentSpeed, playerCoastingDeceleration * deltaTime)
         return
     }
 
@@ -95,21 +99,15 @@ function updatePlayerMovement() {
 
     let facingAlignment = playerCarFacingX() * inputX +
         playerCarFacingY() * inputY
-    let shiftSpeed = 6
 
     if (playerReversing) {
         // Forward input first brakes away the remaining reverse speed, then
         // shifts back into forward movement near a stop.
         if (facingAlignment > 0.5) {
             let reverseBraking = playerBrakingDeceleration * deltaTime
-            let newSpeed = Math.max(0, currentSpeed - reverseBraking)
+            let newSpeed = slowPlayerBy(currentSpeed, reverseBraking)
 
-            if (currentSpeed > 0) {
-                player.vx = player.vx * newSpeed / currentSpeed
-                player.vy = player.vy * newSpeed / currentSpeed
-            }
-
-            if (newSpeed <= shiftSpeed) {
+            if (newSpeed <= playerShiftSpeed) {
                 player.vx = 0
                 player.vy = 0
                 playerReversing = false
@@ -128,17 +126,16 @@ function updatePlayerMovement() {
             player.vy = inputY * currentSpeed
             playPlayerAccelerationSound()
         } else {
-            let newSpeed = Math.max(0, currentSpeed - 9 * deltaTime)
-            if (currentSpeed > 0) {
-                player.vx = player.vx * newSpeed / currentSpeed
-                player.vy = player.vy * newSpeed / currentSpeed
-            }
+            slowPlayerBy(
+                currentSpeed,
+                playerCoastingDeceleration * deltaTime
+            )
         }
         return
     }
 
     let movementAlignment = facingAlignment
-    if (currentSpeed > shiftSpeed) {
+    if (currentSpeed > playerShiftSpeed) {
         movementAlignment = (player.vx * inputX + player.vy * inputY) / currentSpeed
     }
 
@@ -146,14 +143,9 @@ function updatePlayerMovement() {
     // preventing velocity from instantly flipping direction.
     if (movementAlignment < -0.5) {
         let oppositeBraking = playerBrakingDeceleration * deltaTime
-        let newSpeed = Math.max(0, currentSpeed - oppositeBraking)
+        let newSpeed = slowPlayerBy(currentSpeed, oppositeBraking)
 
-        if (currentSpeed > 0) {
-            player.vx = player.vx * newSpeed / currentSpeed
-            player.vy = player.vy * newSpeed / currentSpeed
-        }
-
-        if (newSpeed <= shiftSpeed) {
+        if (newSpeed <= playerShiftSpeed) {
             player.vx = 0
             player.vy = 0
             playerReversing = true
@@ -204,7 +196,8 @@ function updatePlayerMovement() {
 
 // Keeps movement physics and the visible car image synchronized every frame.
 game.onUpdate(function () {
-    if (raceInProgress || freeRoamInProgress) {
+    if (drivingSessionState == DrivingSessionState.Race ||
+        drivingSessionState == DrivingSessionState.FreeRoam) {
         updatePlayerMovement()
         updatePlayerCarImage()
     }
