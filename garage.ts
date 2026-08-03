@@ -251,7 +251,6 @@ function chooseFreeRoamTheme() {
  * The function blocks its current storytelling cutscene while menus are open.
  */
 function showGarage() {
-    leaveRaceForGarage()
     garageIsOpen = true
 
     while (garageIsOpen) {

@@ -117,8 +117,10 @@ function startNextRace() {
     checkpointArmed = false
     raceInProgress = true
 
-    player.setFlag(SpriteFlag.Invisible, false)
-    player.setFlag(SpriteFlag.GhostThroughWalls, false)
+    createPlayer(
+        allCarBodyImages[equippedBodyTier][CarImageDirection.Right],
+        CarImageDirection.Right
+    )
     tiles.placeOnTile(player, tiles.getTileLocation(11, 14))
     startPlayerMovement()
     startPlayerRaceHealth()
@@ -145,8 +147,10 @@ function startFreeRoam() {
     loadSelectedFreeRoamMap()
     scene.setBackgroundColor(7)
 
-    player.setFlag(SpriteFlag.Invisible, false)
-    player.setFlag(SpriteFlag.GhostThroughWalls, false)
+    createPlayer(
+        allCarBodyImages[equippedBodyTier][CarImageDirection.Right],
+        CarImageDirection.Right
+    )
     tiles.placeOnTile(player, tiles.getTileLocation(16, 16))
     startPlayerMovement()
     scene.cameraFollowSprite(player)
@@ -172,15 +176,12 @@ function completeCurrentRace(won: boolean) {
     }
 
     let timedOut = info.countdown() <= 0
-    raceInProgress = false
-    stopPlayerMovement()
-    info.stopCountdown()
-    stopAIRaceSystems()
-    stopPlayerRaceHealth()
+    let carWrecked = isPlayerCarWrecked()
+    leaveRaceForGarage()
 
     if (won) {
         game.splash("YOU WIN!", "Prize: $" + racePrize)
-    } else if (isPlayerCarWrecked()) {
+    } else if (carWrecked) {
         game.splash("CAR WRECKED", "Upgrade durability or avoid collisions.")
     } else if (timedOut) {
         game.splash("TIME UP", "Return to the garage and try again.")
@@ -200,9 +201,7 @@ function leaveRaceForGarage() {
     raceInProgress = false
     freeRoamInProgress = false
     checkpointArmed = false
-    stopPlayerMovement()
-    player.setFlag(SpriteFlag.Invisible, true)
-    scene.setTileMapLevel(null)
+    destroyPlayer()
     clearFreeRoamMapState()
     scene.centerCameraAt(80, 60)
     info.stopCountdown()

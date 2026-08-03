@@ -56,6 +56,36 @@ let playerCollisionImage = img`
 `
 
 /**
+ * Creates the player's hidden hitbox and visible car as one layered pair.
+ * @param playerImage Initial directional image for the visible car.
+ * @param direction Initial facing direction. Defaults to right.
+ */
+function createPlayer(playerImage: Image, direction?: CarImageDirection) {
+    currentCarBodyIndex = equippedBodyTier
+    activeCarBodyImages = allCarBodyImages[equippedBodyTier]
+    currentCarImageDirection = direction == null ? CarImageDirection.Right : direction
+    playerReversing = false
+
+    player = sprites.create(playerCollisionImage, SpriteKind.Player)
+    player.setFlag(SpriteFlag.Invisible, true)
+    player.z = 10
+
+    playerCarVisual = sprites.create(playerImage, SpriteKind.PlayerVisual)
+    playerCarVisual.setFlag(SpriteFlag.Ghost, true)
+    playerCarVisual.z = player.z + 1
+
+    return player
+}
+
+/** Destroys both halves of the player car. */
+function destroyPlayer() {
+    playerCarVisual.destroy()
+    playerCarVisual = null
+    player.destroy()
+    player = null
+}
+
+/**
  * Synchronizes the visible car with the hidden collision sprite.
  * It selects the equipped body and faces the strongest velocity axis unless
  * the car is reversing.
@@ -64,15 +94,6 @@ function updatePlayerCarImage() {
     if (equippedBodyTier != currentCarBodyIndex) {
         currentCarBodyIndex = equippedBodyTier
         activeCarBodyImages = allCarBodyImages[equippedBodyTier]
-    }
-
-    if (!playerCarVisual) {
-        playerCarVisual = sprites.create(
-            activeCarBodyImages[currentCarImageDirection],
-            SpriteKind.PlayerVisual
-        )
-        playerCarVisual.setFlag(SpriteFlag.Ghost, true)
-        playerCarVisual.setFlag(SpriteFlag.Invisible, true)
     }
 
     // Reversing changes velocity but not the direction the car is facing.
@@ -116,26 +137,14 @@ function playerCarFacingY() {
 }
 
 /**
- * Resets velocity and enables the hidden-collider/visible-car sprite pair.
+ * Resets movement state for an already-created player.
  */
 function startPlayerMovement() {
     player.vx = 0
     player.vy = 0
     playerReversing = false
     resetPlayerVehicleSoundTimers()
-    player.setImage(playerCollisionImage)
-    player.setFlag(SpriteFlag.Invisible, true)
     updatePlayerCarImage()
-    playerCarVisual.setFlag(SpriteFlag.Invisible, false)
-}
-
-function stopPlayerMovement() {
-    player.vx = 0
-    player.vy = 0
-    playerReversing = false
-    if (playerCarVisual) {
-        playerCarVisual.setFlag(SpriteFlag.Invisible, true)
-    }
 }
 
 /**
@@ -144,10 +153,6 @@ function stopPlayerMovement() {
  * low-speed turns.
  */
 function updatePlayerMovement() {
-    if (!raceInProgress && !freeRoamInProgress) {
-        return
-    }
-
     let deltaTime = game.eventContext().deltaTime
     let currentSpeed = Math.sqrt(player.vx * player.vx + player.vy * player.vy)
 
@@ -295,6 +300,8 @@ function updatePlayerMovement() {
 
 // Keeps movement physics and the visible car image synchronized every frame.
 game.onUpdate(function () {
-    updatePlayerMovement()
-    updatePlayerCarImage()
+    if (raceInProgress || freeRoamInProgress) {
+        updatePlayerMovement()
+        updatePlayerCarImage()
+    }
 })
