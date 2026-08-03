@@ -1,4 +1,302 @@
 // Auto-generated code. Do not edit.
+namespace myImages {
+
+    helpers._registerFactory("image", function(name: string) {
+        switch(helpers.stringTrim(name)) {
+            case "myTiles.tile1":
+            case "raceCheckpointTile":return img`
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 
+5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+`;
+            case "myTiles.tile2":
+            case "raceRoadTile":return img`
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+c c c c c c c c c c c c c c c c 
+`;
+            case "myTiles.tile3":
+            case "raceFinishTile":return img`
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+1 1 f f 1 1 f f 1 1 f f 1 1 f f 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+f f 1 1 f f 1 1 f f 1 1 f f 1 1 
+`;
+            case "myTiles.tile7":
+            case "highwayShoulder":return img`
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+d d d e d d d e d d d e d d d e 
+`;
+            case "myTiles.tile14":
+            case "caveMoss":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . 6 . . . . . . . . . . . . 
+. . 6 7 6 . . . . . . . . . . . 
+. . . 6 7 6 . . . . . . 6 . . . 
+. . . . . . . . . . . 6 7 6 . . 
+. . . . . . . . . . . . 6 7 . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . 6 . . . . . . . . 
+. . . . . . 6 7 6 . . . . . . . 
+. . . . . . . 6 7 6 . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "myTiles.transparency16":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "myTiles.tile15":
+            case "forestTrail":return img`
+e e e e e e e e e e e e e e e e 
+e e e e e e e e e e e e e e e e 
+e e e e e e e e e e d e e e e e 
+e e e e d e e e e e e e e e e e 
+e e e e e e e e e e e e e e e e 
+e e d e e e e e e e e e e e e e 
+e e e e e e e d e e e e e e e e 
+e e e e e e e e e e e e d e e e 
+e e e e e e e e e e e e e e e e 
+e e e e e e e e e e e e e e d e 
+e e e e e d e e e e e e e e e e 
+e e e e e e e e e e e e e e e e 
+e e e e e e e e e d e e e e e e 
+e e e e e e e e e e e e e e e e 
+e e e e e e e e e e e e e e e e 
+e e e e e e e e e e e e e e e e 
+`;
+            case "myTiles.tile17":
+            case "forestRock":return img`
+7 1 7 7 7 7 7 7 7 b b b b 7 7 7 
+1 5 1 7 7 7 b b b d d d d b 7 7 
+7 1 7 7 7 7 b d d d d d d b 7 7 
+7 7 7 7 b b d d d d d b b d 7 7 
+7 7 7 7 b d d d d d d b b d b 7 
+7 7 7 7 c d d d d d b b d b c 7 
+7 7 7 b c c b b b b d d b c c 7 
+7 7 b b c c c b d d b c c c c 7 
+7 b b d d d b b b b b b c c c c 
+7 c d d d d d d b d b c c c b c 
+7 c b d d d b b d b c c c b b c 
+c b c c c c b d d b b b b b c c 
+c c b b b d d b c c b b b b c c 
+c c c c c c c c c b b b b c c 7 
+7 c c c c b b b b b b b c c 7 7 
+7 7 7 7 c c c c c c c c 7 7 7 7 
+`;
+            case "myTiles.tile16":
+            case "forestTree":return img`
+7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+7 7 7 7 7 7 c c c c 6 7 7 7 7 7 
+7 7 7 7 c c 6 7 7 5 5 6 6 7 7 7 
+7 7 c c 6 6 6 6 7 5 5 7 c c 7 7 
+7 c 6 6 6 7 7 7 7 7 7 5 6 c c 7 
+7 c 6 6 7 7 7 5 7 6 7 7 7 6 c c 
+c 6 6 7 7 6 7 7 7 6 7 7 6 6 6 c 
+c c 6 6 6 7 6 7 6 6 6 6 5 7 6 c 
+c c c c 6 7 7 6 7 7 7 6 7 6 6 c 
+7 c c 6 6 6 6 c 6 6 6 6 6 c c c 
+7 c c 6 6 c 6 6 c 6 c 6 6 c c 7 
+7 7 c c f f 6 6 c f f c c f 7 7 
+7 7 7 7 c f c c c f c f f 7 7 7 
+7 7 5 7 7 4 f f f c 7 e 7 7 7 7 
+7 5 2 5 7 7 e e e 7 7 4 7 7 7 7 
+7 7 5 7 7 7 7 e e 7 e 7 7 7 7 7 
+`;
+            case "myTiles.tile12":
+            case "caveCrystal":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . 9 . . . . . . . . 
+. . . . . . 9 9 9 . . . . . . . 
+. . . . . 9 9 1 9 9 . . . . . . 
+. . . . . 9 9 9 9 9 . . . . . . 
+. . . . . . 9 9 9 . . . . . . . 
+. . . . . . 9 9 8 . . . . . . . 
+. . . . . . 9 9 8 . . 9 . . . . 
+. . . 9 . . 8 8 8 . 9 9 9 . . . 
+. . 9 9 9 . 8 8 8 9 9 1 9 9 . . 
+. . 9 1 9 9 8 8 8 9 9 9 9 9 . . 
+. . . 9 9 9 8 8 8 8 9 9 9 . . . 
+. . . . 9 8 8 8 8 8 8 8 . . . . 
+. . . . f f f f f f f f f . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "myTiles.tile10":
+            case "highwayCone":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . 4 . . . . . . . 
+. . . . . . . 4 4 4 . . . . . . 
+. . . . . . . 4 1 4 . . . . . . 
+. . . . . . 4 4 4 4 4 . . . . . 
+. . . . . . 4 1 1 1 4 . . . . . 
+. . . . . 4 4 4 4 4 4 4 . . . . 
+. . . . . 4 1 1 1 1 1 4 . . . . 
+. . . . 4 4 4 4 4 4 4 4 4 . . . 
+. . . f f f f f f f f f f f . . 
+. . . f f f f f f f f f f f . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "myTiles.tile9":
+            case "highwayCrack":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . f . . . . . . . . . . 
+. . . . . . f . . . . . . . . . 
+. . . . . . . f . f . . . . . . 
+. . . . . . . . f . . . . . . . 
+. . . . . . . . . f . . . . . . 
+. . . . . . . . . . f f . . . . 
+. . . . . . . . . . . . f . . . 
+. . . . . . . . . . . . f . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "myTiles.tile13":
+            case "caveRubble":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . d . . . 
+. . . . d d . . . . . d d d . . 
+. . . d d d d . . . . d d d d . 
+. . . d d d . . . . . d d d . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . d d . . . . . . 
+. . . . . . . d d d d . . . . . 
+. . . . . . . . d d . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "myTiles.tile18":
+            case "forestFlowers":return img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . 5 . . . . . . . . . . . . 
+. . 5 2 5 . . . . . . . . . . . 
+. . . 5 . . . . . . . . 1 . . . 
+. . . . . . . . . . . 1 5 1 . . 
+. . . . . . . . . . . . 1 . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . 3 . . . . . . . . 
+. . . . . . 3 2 3 . . . . . . . 
+. . . . . . . 3 . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`;
+        }
+        return null;
+    })
+
+    helpers._registerFactory("animation", function(name: string) {
+        switch(helpers.stringTrim(name)) {
+
+        }
+        return null;
+    })
+
+    helpers._registerFactory("song", function(name: string) {
+        switch(helpers.stringTrim(name)) {
+
+        }
+        return null;
+    })
+
+    helpers._registerFactory("json", function(name: string) {
+        switch(helpers.stringTrim(name)) {
+
+        }
+        return null;
+    })
+
+}
+// Auto-generated code. Do not edit.
+
+// Auto-generated code. Do not edit.
 namespace myTiles {
     //% fixedInstance jres blockIdentity=images._tile
     export const tile1 = image.ofBuffer(hex``);
@@ -212,32 +510,32 @@ namespace myTiles {
     helpers._registerFactory("tile", function(name: string) {
         switch(helpers.stringTrim(name)) {
             case "raceCheckpointTile":
-            case "tile1":return tile1;
+            case "tile1":return myTiles.tile1;
             case "raceRoadTile":
-            case "tile2":return tile2;
+            case "tile2":return myTiles.tile2;
             case "raceFinishTile":
-            case "tile3":return tile3;
+            case "tile3":return myTiles.tile3;
             case "highwayShoulder":
-            case "tile7":return tile7;
+            case "tile7":return myTiles.tile7;
             case "caveMoss":
-            case "tile14":return tile14;
-            case "transparency16":return transparency16;
+            case "tile14":return myTiles.tile14;
+            case "transparency16":return myTiles.transparency16;
             case "forestTrail":
-            case "tile15":return tile15;
+            case "tile15":return myTiles.tile15;
             case "forestRock":
-            case "tile17":return tile17;
+            case "tile17":return myTiles.tile17;
             case "forestTree":
-            case "tile16":return tile16;
+            case "tile16":return myTiles.tile16;
             case "caveCrystal":
-            case "tile12":return tile12;
+            case "tile12":return myTiles.tile12;
             case "highwayCone":
-            case "tile10":return tile10;
+            case "tile10":return myTiles.tile10;
             case "highwayCrack":
-            case "tile9":return tile9;
+            case "tile9":return myTiles.tile9;
             case "caveRubble":
-            case "tile13":return tile13;
+            case "tile13":return myTiles.tile13;
             case "forestFlowers":
-            case "tile18":return tile18;
+            case "tile18":return myTiles.tile18;
         }
         return null;
     })
