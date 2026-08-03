@@ -1,6 +1,6 @@
 // Metadata
-let cash = 5000
-let wins = 10
+let cash = 0
+let wins = 0
 let racesRaced = 0
 
 recalculatePlayerStats()
