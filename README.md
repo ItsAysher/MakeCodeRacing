@@ -115,6 +115,10 @@ Current race settings are:
 | Intermediate | 2 | $500 | 55 seconds | 3 |
 | Expert | 3 | $1300 | 120 seconds | 4 |
 
+### `save_system.ts`
+
+Stores browser-persistent progression as one versioned number-array record. It loads and validates cash, race statistics, owned parts and paints, equipped parts, and equipped colors; it also restores clean new-game defaults when progress is reset.
+
 ### `sprite_kinds.ts`
 
 Declares the custom sprite kinds shared across the project, including AI racers, the visible player-car sprite, and minimap HUD sprites.

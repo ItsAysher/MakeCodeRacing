@@ -109,8 +109,8 @@ scene.onOverlapTile(SpriteKind.Player, assets.tile`raceFinishTile`, function (sp
     if (raceLap >= activeRaceDefinition.lapTarget) {
         completeCurrentRace(true)
     } else {
-        player.sayText(
-            "Lap " + raceLap + "/" + activeRaceDefinition.lapTarget,
+        sprite.sayText(
+            "Lap " + (raceLap + 1) + "/" + activeRaceDefinition.lapTarget,
             1000,
             false
         )

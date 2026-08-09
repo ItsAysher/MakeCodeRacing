@@ -12,4 +12,6 @@ function recordRaceResult(won: boolean, prizeMoney: number) {
     if (won) {
         wins += 1
     }
+
+    saveGameProgress()
 }

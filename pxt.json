@@ -20,6 +20,7 @@
         "images.g.jres",
         "images.g.ts",
         "customization.ts",
+        "save_system.ts",
         "car_assets.ts",
         "player_rendering.ts",
         "player_movement.ts",

@@ -75,9 +75,10 @@ function chooseEngine() {
         engineNames,
         engineUnlocked
     )
-    if (tier >= 0) {
+    if (tier >= 0 && equippedEngineTier != tier) {
         equippedEngineTier = tier
         recalculatePlayerStats()
+        saveGameProgress()
     }
 }
 
@@ -87,9 +88,10 @@ function chooseWheels() {
         wheelNames,
         wheelsUnlocked
     )
-    if (tier >= 0) {
+    if (tier >= 0 && equippedWheelTier != tier) {
         equippedWheelTier = tier
         recalculatePlayerStats()
+        saveGameProgress()
     }
 }
 
@@ -99,9 +101,10 @@ function chooseBody() {
         bodyNames,
         bodyUnlocked
     )
-    if (tier >= 0) {
+    if (tier >= 0 && equippedBodyTier != tier) {
         equippedBodyTier = tier
         recalculatePlayerStats()
+        saveGameProgress()
     }
 }
 
@@ -111,9 +114,10 @@ function chooseBrakes() {
         brakeNames,
         brakesUnlocked
     )
-    if (tier >= 0) {
+    if (tier >= 0 && equippedBrakeTier != tier) {
         equippedBrakeTier = tier
         recalculatePlayerStats()
+        saveGameProgress()
     }
 }
 

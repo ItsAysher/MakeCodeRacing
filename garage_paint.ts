@@ -28,6 +28,7 @@ function buyPaintColor(index: number) {
     if (story.checkLastAnswer("Buy for $" + paintPrice)) {
         cash -= paintPrice
         paintColorsUnlocked[index] = true
+        saveGameProgress()
         story.printCharacterText(
             paintColorNames[index] +
             " paint purchased!\nCash remaining: $" + cash

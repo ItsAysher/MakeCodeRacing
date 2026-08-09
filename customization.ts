@@ -87,6 +87,10 @@ function drawCustomizedCarPart(
 
 /** Equips a purchased color and marks rendered player images as stale. */
 function equipPlayerPaint(part: CarPaintPart, colorValue: number) {
+    if (equippedColorForPart(part) == colorValue) {
+        return
+    }
+
     if (part == CarPaintPart.Primary) {
         equippedPrimaryColor = colorValue
     } else if (part == CarPaintPart.Secondary) {
@@ -95,4 +99,5 @@ function equipPlayerPaint(part: CarPaintPart, colorValue: number) {
         equippedAccentColor = colorValue
     }
     playerPaintRevision += 1
+    saveGameProgress()
 }
