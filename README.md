@@ -41,7 +41,13 @@ Contains the paint catalog, ownership and equipped-color state, body-specific so
 
 ### `freeroam_world.ts`
 
-Defines the Forest, Highway, and Cave Free Roam themes. It clones the selected authored map, randomizes theme-specific scenery while protecting the spawn area and important routes, creates the Free Roam player, and handles the B-button return to the Garage.
+Defines the Forest, Highway, and Cave Free Roam themes. It loads the selected authored or generated world, randomizes scenery for the Forest and Highway while protecting their spawn areas and important routes, creates the Free Roam player, and handles the B-button return to the Garage.
+
+### `freeroam_cave_generation.ts`
+
+Owns browser-only infinite Cave Free Roam generation. The authored 32x32 cave is the definitive center of the world and is placed inside a 40x40 aligned home region whose four wrapper tunnels extend its existing edge sockets into procedural branches. Beyond those edges, reciprocal rules assemble Straight, Turn, T-junction, and Cross sections without mismatched openings or dead ends. A reusable 3x3 window of 8x8 sections follows the player without changing velocity.
+
+Cave rubble, moss, and solid crystals are selected deterministically so they remain stable when the window rebases. Each decoration is composited over a verified cave floor image; walls never receive decorations. The spawn remains clear, and crystals are excluded from the main base-map cross and generated driving corridors.
 
 ### `game_flow.ts`
 

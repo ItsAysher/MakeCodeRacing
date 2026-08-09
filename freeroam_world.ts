@@ -96,61 +96,26 @@ function randomizeHighwayDecorations(map: tiles.TileMapData) {
 }
 
 /**
- * Adds cave rubble, moss, and crystals without blocking the main travel tunnels.
- * @param map The cloned cave map to decorate.
- */
-function randomizeCaveDecorations(map: tiles.TileMapData) {
-    tileUtil.forEachTileInMap(map, function (column, row, location) {
-        if (isFreeRoamSpawnArea(column, row)) {
-            return
-        }
-
-        let isCaveFloor =
-            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundCenter) ||
-            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundNorthWest1) ||
-            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundNorthEast1) ||
-            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundSouthWest1) ||
-            tileUtil.tileIs(map, location, sprites.dungeon.darkGroundSouthEast1)
-
-        if (isCaveFloor) {
-            let decorationRoll = randint(0, 99)
-            let isMainTunnel =
-                (column >= 14 && column <= 17) ||
-                (row >= 14 && row <= 17)
-
-            if (decorationRoll < 4) {
-                tileUtil.coverTile(location, assets.tile`caveRubble`)
-            } else if (decorationRoll < 10 && !isMainTunnel) {
-                // Crystals are solid, so keep them out of the four-tile-wide
-                // tunnels that guarantee travel between repeated map edges.
-                tileUtil.coverTile(location, assets.tile`caveCrystal`)
-                tileUtil.setWallAt(map, location, true)
-            } else if (decorationRoll < 17) {
-                tileUtil.coverTile(location, assets.tile`caveMoss`)
-            }
-        }
-    })
-}
-
-/**
  * Applies the decoration rules for the currently selected Free Roam theme.
  * @param map The cloned base map that may be safely modified.
  */
 function randomizeFreeRoamDecorations(map: tiles.TileMapData) {
     if (selectedFreeRoamTheme == FreeRoamTheme.Highway) {
         randomizeHighwayDecorations(map)
-    } else if (selectedFreeRoamTheme == FreeRoamTheme.Cave) {
-        randomizeCaveDecorations(map)
     } else {
         randomizeForestDecorations(map)
     }
 }
 
-/**
- * Clones, activates, and decorates the selected Free Roam map.
- * Cloning prevents randomized changes from modifying the authored asset.
- */
+/** Loads either the streamed Cave or a decorated clone of an authored map. */
 function loadSelectedFreeRoamMap() {
+    if (selectedFreeRoamTheme == FreeRoamTheme.Cave) {
+        // The authored cave is the permanent center of the streamed world.
+        // Its floor-only decorations are baked into stable tile variants.
+        startCaveFreeRoamGeneration()
+        return
+    }
+
     let freeRoamMap = tileUtil.cloneMap(selectedFreeRoamBaseMap())
     tiles.setCurrentTilemap(freeRoamMap)
     randomizeFreeRoamDecorations(freeRoamMap)
@@ -163,7 +128,11 @@ function startFreeRoam() {
     scene.setBackgroundColor(7)
 
     createPlayer(CarImageDirection.Right)
-    tiles.placeOnTile(player, tiles.getTileLocation(16, 16))
+    let spawnTile = 16
+    if (selectedFreeRoamTheme == FreeRoamTheme.Cave) {
+        spawnTile = caveFreeRoamSpawnTile
+    }
+    tiles.placeOnTile(player, tiles.getTileLocation(spawnTile, spawnTile))
     startPlayerMovement()
     scene.cameraFollowSprite(player)
 

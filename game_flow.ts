@@ -33,6 +33,8 @@ function leaveCurrentDrivingSession() {
     if (drivingSessionState == DrivingSessionState.Race ||
         drivingSessionState == DrivingSessionState.RaceFinishing) {
         stopCurrentRace()
+    } else if (drivingSessionState == DrivingSessionState.FreeRoam) {
+        stopCaveFreeRoamGeneration()
     }
 
     destroyPlayer()

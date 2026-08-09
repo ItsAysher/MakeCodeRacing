@@ -28,6 +28,7 @@
         "race_definitions.ts",
         "game_flow.ts",
         "freeroam_world.ts",
+        "freeroam_cave_generation.ts",
         "race.ts",
         "minimap.ts",
         "ai_racers.ts",
