@@ -1,6 +1,7 @@
-// Persistent player progression stored as one versioned settings record
+// Persistent player progression and identity stored in browser settings
 
 const racingSaveKey = "makecode-racing-save"
+const racingPlayerNameKey = "makecode-racing-player-name"
 const racingSaveVersion = 1
 const racingSaveValueCount = 38
 
@@ -61,6 +62,11 @@ function saveGameProgress() {
     saveData.push(equippedSecondaryColor)
     saveData.push(equippedAccentColor)
     settings.writeNumberArray(racingSaveKey, saveData)
+}
+
+/** Stores the player name separately so ordinary progression saves do not rewrite it. */
+function savePlayerName() {
+    settings.writeString(racingPlayerNameKey, playerName)
 }
 
 /** Restores saved progression, returning false when no compatible save exists. */
@@ -128,6 +134,7 @@ function loadGameProgress() {
     equippedPrimaryColor = loadOwnedPaintColor(saveData[35], 8)
     equippedSecondaryColor = loadOwnedPaintColor(saveData[36], 6)
     equippedAccentColor = loadOwnedPaintColor(saveData[37], 1)
+    playerName = settings.readString(racingPlayerNameKey) || ""
     playerPaintRevision += 1
     return true
 }
@@ -135,10 +142,12 @@ function loadGameProgress() {
 /** Removes the browser save and restores every permanent value to new-game defaults. */
 function resetGameProgress() {
     settings.remove(racingSaveKey)
+    settings.remove(racingPlayerNameKey)
 
     cash = 0
     wins = 0
     racesRaced = 0
+    playerName = ""
     engineUnlocked = [true, false, false]
     wheelsUnlocked = [true, false, false]
     bodyUnlocked = [true, false, false]

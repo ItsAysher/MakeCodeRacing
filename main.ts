@@ -1,4 +1,4 @@
-loadGameProgress()
+let existingGameProgressLoaded = loadGameProgress()
 recalculatePlayerStats()
 
 /**
@@ -18,13 +18,31 @@ function showStartMenu() {
     }
 }
 
+/** Introduces a new player and creates the first save with their chosen name. */
+function introduceNewPlayer() {
+    // Placeholder opening cutscene. Replace this text with the final intro.
+    story.printCharacterText("The road to the championship starts in your garage.")
+    game.showLongText("Enter your name, racer", DialogLayout.Bottom)
+    playerName = game.askForString("Enter your name")
+
+    if (!playerName) {
+        playerName = "Racer"
+    }
+
+    saveGameProgress()
+    savePlayerName()
+}
+
 /**
  * Runs the opening cutscene, first Garage visit, and selected driving mode.
  */
 function runStartingSequence() {
     story.startCutscene(function () {
-        // Placeholder opening cutscene. Replace this text with the final intro.
-        story.printCharacterText("The road to the championship starts in your garage.")
+        if (existingGameProgressLoaded && playerName.length > 0) {
+            story.printCharacterText("Welcome back, " + playerName)
+        } else {
+            introduceNewPlayer()
+        }
         showStartMenu()
 
         // The first Garage visit happens after both the opening cutscene and

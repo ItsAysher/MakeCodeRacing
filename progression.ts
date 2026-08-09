@@ -3,6 +3,7 @@
 let cash = 0
 let wins = 0
 let racesRaced = 0
+let playerName = ""
 
 /** Applies one completed race result to the player's session progression. */
 function recordRaceResult(won: boolean, prizeMoney: number) {

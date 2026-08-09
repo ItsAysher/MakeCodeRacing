@@ -69,7 +69,7 @@ Implements part labels, purchasing, equipping, shared category-selection logic, 
 
 ### `main.ts`
 
-Calculates the initial vehicle statistics, runs the start menu and placeholder introduction, opens the first Garage visit, and launches the first selected driving mode.
+Loads saved progress, welcomes returning players by name or prompts new players to choose one, calculates the initial vehicle statistics, runs the start menu, opens the first Garage visit, and launches the first selected driving mode.
 
 ### `minimap.ts`
 
@@ -117,7 +117,7 @@ Current race settings are:
 
 ### `save_system.ts`
 
-Stores browser-persistent progression as one versioned number-array record. It loads and validates cash, race statistics, owned parts and paints, equipped parts, and equipped colors; it also restores clean new-game defaults when progress is reset.
+Stores browser-persistent progression as a versioned number-array record and stores the player name under a separate string key so ordinary progression updates do not rewrite it. It loads and validates cash, race statistics, owned parts and paints, equipped parts, equipped colors, and player identity; it also restores clean new-game defaults when progress is reset.
 
 ### `sprite_kinds.ts`
 
