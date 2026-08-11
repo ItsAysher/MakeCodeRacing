@@ -54,17 +54,10 @@ let caveDecorationVariantCount = CaveDecorationKind.Crystal
 let caveDecorationTileStartIndex = CaveMapTileIndex.InnerSouthWest + 1
 let caveFreeRoamTileset: Image[] = []
 
-let caveSectionSize = 8
-let caveTileSize = 16
-let caveWindowSectionCount = 3
-let caveWindowTileSize = caveSectionSize * caveWindowSectionCount
-let caveCenterSectionStartPixel = caveSectionSize * caveTileSize
-let caveCenterSectionEndPixel = caveCenterSectionStartPixel +
-    caveSectionSize * caveTileSize
-let caveFreeRoamSpawnTile = caveSectionSize + 4
+let caveFreeRoamSpawnTile = freeRoamSectionSize + 4
 let caveHomeRegionSectionRadius = 2
 let caveHomeRegionSectionCount = 5
-let caveHomeRegionTileSize = caveHomeRegionSectionCount * caveSectionSize
+let caveHomeRegionTileSize = caveHomeRegionSectionCount * freeRoamSectionSize
 let caveBaseMapHomeOffset = 4
 
 let caveFreeRoamGenerationActive = false
@@ -132,31 +125,14 @@ function initializeCaveFreeRoamTileset() {
     }
 }
 
-/** Returns a positive remainder for both positive and negative coordinates. */
-function cavePositiveModulo(value: number, divisor: number) {
-    let result = value % divisor
-    if (result < 0) {
-        result += divisor
-    }
-    return result
-}
-
-/** Mixes a world coordinate with the current cave seed. */
-function caveCoordinateHash(x: number, y: number, salt: number) {
-    let value = x * 374761393 + y * 668265263 +
-        caveFreeRoamSeed * 69069 + salt * 362437
-    value = value ^ (value << 13)
-    value = value ^ (value >> 17)
-    value = value ^ (value << 5)
-    return value & 0x7fffffff
-}
-
 /**
  * Selects whether a two-by-two world-section block swaps two horizontal
  * routes through a pair of turns. Unswapped blocks produce straight pieces.
  */
 function caveBlockUsesTurns(blockX: number, blockY: number) {
-    return caveCoordinateHash(blockX, blockY, 17) % 2 == 0
+    return freeRoamCoordinateHash(
+        caveFreeRoamSeed, blockX, blockY, 17
+    ) % 2 == 0
 }
 
 /** True when a horizontal section edge crosses the home-region perimeter. */
@@ -211,7 +187,7 @@ function caveHorizontalSectionConnection(leftX: number, y: number) {
 
     // Even left coordinates are the internal edge of a two-column block.
     // A turning block closes this edge and substitutes a vertical connection.
-    if (cavePositiveModulo(leftX, 2) == 0) {
+    if (freeRoamPositiveModulo(leftX, 2) == 0) {
         baseConnection = !caveBlockUsesTurns(
             Math.floor(leftX / 2),
             Math.floor(y / 2)
@@ -224,7 +200,9 @@ function caveHorizontalSectionConnection(leftX: number, y: number) {
 
     // Extra reciprocal edges convert some Straight/Turn sections into
     // T-junctions and Cross sections without ever creating a dead end.
-    return caveCoordinateHash(leftX, y, 43) % 100 < 20
+    return freeRoamCoordinateHash(
+        caveFreeRoamSeed, leftX, y, 43
+    ) % 100 < 20
 }
 
 /** True when the vertical edge from (x, topY) to (x, topY + 1) is open. */
@@ -247,7 +225,7 @@ function caveVerticalSectionConnection(x: number, topY: number) {
 
     // A turning block connects its two rows internally. Edges between
     // two-row blocks begin closed and may be opened by the reciprocal hash.
-    if (cavePositiveModulo(topY, 2) == 0) {
+    if (freeRoamPositiveModulo(topY, 2) == 0) {
         baseConnection = caveBlockUsesTurns(
             Math.floor(x / 2),
             Math.floor(topY / 2)
@@ -258,7 +236,9 @@ function caveVerticalSectionConnection(x: number, topY: number) {
         return true
     }
 
-    return caveCoordinateHash(x, topY, 71) % 100 < 20
+    return freeRoamCoordinateHash(
+        caveFreeRoamSeed, x, topY, 71
+    ) % 100 < 20
 }
 
 /** Builds the reciprocal North/East/South/West exit mask for one section. */
@@ -317,8 +297,8 @@ function caveSectionHasCorridor(
     localColumn: number,
     localRow: number
 ) {
-    if (localColumn < 0 || localColumn >= caveSectionSize ||
-        localRow < 0 || localRow >= caveSectionSize) {
+    if (localColumn < 0 || localColumn >= freeRoamSectionSize ||
+        localRow < 0 || localRow >= freeRoamSectionSize) {
         return false
     }
 
@@ -382,7 +362,8 @@ function caveStraightWallTile(
     worldTileY: number,
     sectionKind: CaveSectionKind
 ) {
-    let variant = caveCoordinateHash(
+    let variant = freeRoamCoordinateHash(
+        caveFreeRoamSeed,
         worldTileX,
         worldTileY,
         101 + sectionKind
@@ -609,9 +590,9 @@ function caveHomeArrayIndex(
     localRow: number
 ) {
     let homeColumn = (worldSectionX + caveHomeRegionSectionRadius) *
-        caveSectionSize + localColumn
+        freeRoamSectionSize + localColumn
     let homeRow = (worldSectionY + caveHomeRegionSectionRadius) *
-        caveSectionSize + localRow
+        freeRoamSectionSize + localRow
     return homeRow * caveHomeRegionTileSize + homeColumn
 }
 
@@ -634,7 +615,9 @@ function caveDecorationAtWorldTile(
         return CaveDecorationKind.None
     }
 
-    let decorationRoll = caveCoordinateHash(worldTileX, worldTileY, 149) % 100
+    let decorationRoll = freeRoamCoordinateHash(
+        caveFreeRoamSeed, worldTileX, worldTileY, 149
+    ) % 100
     if (decorationRoll < 4) {
         return CaveDecorationKind.Rubble
     } else if (decorationRoll < 10 && crystalAllowed) {
@@ -675,16 +658,16 @@ function stampCaveSection(
         sectionKind = caveSectionKindForExits(exits)
     }
 
-    for (let localRow = 0; localRow < caveSectionSize; localRow++) {
+    for (let localRow = 0; localRow < freeRoamSectionSize; localRow++) {
         for (let localColumn = 0;
-            localColumn < caveSectionSize;
+            localColumn < freeRoamSectionSize;
             localColumn++) {
-            let mapColumn = physicalSectionX * caveSectionSize + localColumn
-            let mapRow = physicalSectionY * caveSectionSize + localRow
+            let mapColumn = physicalSectionX * freeRoamSectionSize + localColumn
+            let mapRow = physicalSectionY * freeRoamSectionSize + localRow
             let tileIndex = CaveMapTileIndex.Floor
             let isWall = false
-            let worldTileX = worldSectionX * caveSectionSize + localColumn
-            let worldTileY = worldSectionY * caveSectionSize + localRow
+            let worldTileX = worldSectionX * freeRoamSectionSize + localColumn
+            let worldTileY = worldSectionY * freeRoamSectionSize + localRow
             let crystalAllowed = true
 
             if (isHomeSection) {
@@ -746,10 +729,10 @@ function stampCaveSection(
 /** Restamps the 3x3 physical window around the current logical section. */
 function rebuildCaveFreeRoamWindow() {
     for (let physicalSectionY = 0;
-        physicalSectionY < caveWindowSectionCount;
+        physicalSectionY < freeRoamWindowSectionCount;
         physicalSectionY++) {
         for (let physicalSectionX = 0;
-            physicalSectionX < caveWindowSectionCount;
+            physicalSectionX < freeRoamWindowSectionCount;
             physicalSectionX++) {
             stampCaveSection(
                 caveFreeRoamMap,
@@ -764,31 +747,14 @@ function rebuildCaveFreeRoamWindow() {
 
 /** Creates and activates a fresh browser-only infinite Cave Free Roam world. */
 function startCaveFreeRoamGeneration() {
-    caveFreeRoamSeed = randint(0, 1000000000)
+    caveFreeRoamSeed = createFreeRoamSeed()
     caveCenterWorldSectionX = 0
     caveCenterWorldSectionY = 0
     initializeCaveFreeRoamTileset()
     buildCaveHomeRegion()
 
-    let mapBuffer = control.createBuffer(
-        4 + caveWindowTileSize * caveWindowTileSize
-    )
-    mapBuffer.setNumber(
-        NumberFormat.UInt16LE,
-        0,
-        caveWindowTileSize
-    )
-    mapBuffer.setNumber(
-        NumberFormat.UInt16LE,
-        2,
-        caveWindowTileSize
-    )
-
-    caveFreeRoamMap = tiles.createTilemap(
-        mapBuffer,
-        image.create(caveWindowTileSize, caveWindowTileSize),
-        caveFreeRoamTileset.slice(),
-        TileScale.Sixteen
+    caveFreeRoamMap = createFreeRoamStreamingTilemap(
+        caveFreeRoamTileset
     )
     rebuildCaveFreeRoamWindow()
     tiles.setCurrentTilemap(caveFreeRoamMap)
@@ -799,6 +765,31 @@ function startCaveFreeRoamGeneration() {
 function stopCaveFreeRoamGeneration() {
     caveFreeRoamGenerationActive = false
     caveFreeRoamMap = null
+}
+
+/** Generator-neutral map-display accessors for the active Cave session. */
+function caveFreeRoamGenerationIsActive() {
+    return caveFreeRoamGenerationActive
+}
+
+function caveFreeRoamCenterWorldSectionX() {
+    return caveCenterWorldSectionX
+}
+
+function caveFreeRoamCenterWorldSectionY() {
+    return caveCenterWorldSectionY
+}
+
+function caveFreeRoamMapData() {
+    return caveFreeRoamMap
+}
+
+function caveFreeRoamHomeWorldTileX() {
+    return 4
+}
+
+function caveFreeRoamHomeWorldTileY() {
+    return 4
 }
 
 /**
@@ -814,28 +805,8 @@ function updateCaveFreeRoamGeneration() {
         return
     }
 
-    let nextPlayerX = player.x
-    let nextPlayerY = player.y
-    let sectionShiftX = 0
-    let sectionShiftY = 0
-    let sectionPixelSize = caveSectionSize * caveTileSize
-
-    while (nextPlayerX < caveCenterSectionStartPixel) {
-        sectionShiftX--
-        nextPlayerX += sectionPixelSize
-    }
-    while (nextPlayerX >= caveCenterSectionEndPixel) {
-        sectionShiftX++
-        nextPlayerX -= sectionPixelSize
-    }
-    while (nextPlayerY < caveCenterSectionStartPixel) {
-        sectionShiftY--
-        nextPlayerY += sectionPixelSize
-    }
-    while (nextPlayerY >= caveCenterSectionEndPixel) {
-        sectionShiftY++
-        nextPlayerY -= sectionPixelSize
-    }
+    let sectionShiftX = freeRoamSectionShiftForPixel(player.x)
+    let sectionShiftY = freeRoamSectionShiftForPixel(player.y)
 
     if (sectionShiftX == 0 && sectionShiftY == 0) {
         return
@@ -844,23 +815,8 @@ function updateCaveFreeRoamGeneration() {
     caveCenterWorldSectionX += sectionShiftX
     caveCenterWorldSectionY += sectionShiftY
     rebuildCaveFreeRoamWindow()
-
-    let pixelShiftX = nextPlayerX - player.x
-    let pixelShiftY = nextPlayerY - player.y
-    player.setPosition(nextPlayerX, nextPlayerY)
-
-    // Player rendering updates earlier in the frame, so shift the visible
-    // sprite immediately as well to prevent a one-frame split.
-    if (playerCarVisual) {
-        playerCarVisual.setPosition(
-            playerCarVisual.x + pixelShiftX,
-            playerCarVisual.y + pixelShiftY
-        )
-    }
+    moveFreeRoamPlayerToRebasedPosition(
+        freeRoamRebasedPixel(player.x),
+        freeRoamRebasedPixel(player.y)
+    )
 }
-
-// Register once and gate by state; starting Free Roam repeatedly must not
-// accumulate streaming callbacks.
-game.onUpdate(function () {
-    updateCaveFreeRoamGeneration()
-})

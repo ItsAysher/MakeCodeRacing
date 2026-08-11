@@ -1,4 +1,4 @@
-// Auto-generated code. Do not edit.
+﻿// Auto-generated code. Do not edit.
 namespace myImages {
 
     helpers._registerFactory("image", function(name: string) {
@@ -268,6 +268,25 @@ c c c c 6 7 7 6 7 7 7 6 7 6 6 c
 . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . 
 `;
+            case "myTiles.tile19":
+            case "forestRiverWater":return img`
+8 8 8 8 6 8 8 8 8 8 8 8 8 8 8 8
+8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+8 8 8 6 8 8 8 9 8 8 8 8 8 8 8 8
+8 8 8 6 6 8 8 8 8 8 8 8 8 8 8 8
+8 8 8 8 8 8 9 8 8 8 6 6 8 8 8 8
+8 8 8 8 8 8 9 9 8 8 8 6 8 8 8 8
+8 8 9 8 8 8 8 8 8 8 8 8 8 9 8 8
+8 8 8 8 8 8 8 8 8 8 6 8 8 8 8 8
+8 9 8 8 8 8 6 8 8 8 8 8 9 8 8 8
+8 9 9 8 8 8 8 8 8 8 8 8 9 9 8 8
+8 8 8 8 8 6 8 8 8 8 8 8 8 8 6 8
+8 8 8 8 8 6 6 8 8 8 8 8 8 8 8 8
+8 8 8 8 8 8 8 8 8 9 8 8 8 6 8 8
+8 8 8 8 8 8 8 8 8 8 8 8 8 6 6 8
+8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8
+8 8 8 8 8 8 8 8 9 9 8 8 8 8 8 8
+`;
         }
         return null;
     })
@@ -326,6 +345,8 @@ namespace myTiles {
     export const tile13 = image.ofBuffer(hex``);
     //% fixedInstance jres blockIdentity=images._tile
     export const tile18 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile19 = image.ofBuffer(hex``);
 
     helpers._registerFactory("tilemap", function(name: string) {
         switch(helpers.stringTrim(name)) {
@@ -581,6 +602,8 @@ namespace myTiles {
             case "tile13":return myTiles.tile13;
             case "forestFlowers":
             case "tile18":return myTiles.tile18;
+            case "forestRiverWater":
+            case "tile19":return myTiles.tile19;
         }
         return null;
     })

@@ -5,8 +5,7 @@
         "device": "*",
         "arcade-storytelling": "github:microsoft/arcade-storytelling#v1.0.3",
         "arcade-minimap": "github:microsoft/arcade-minimap#v0.6.1",
-        "status-bar": "github:jwunderl/pxt-status-bar#v0.4.2",
-        "arcade-tile-util": "github:microsoft/arcade-tile-util#v1.2.0"
+        "status-bar": "github:jwunderl/pxt-status-bar#v0.4.2"
     },
     "files": [
         "main.blocks",
@@ -28,7 +27,12 @@
         "race_definitions.ts",
         "game_flow.ts",
         "freeroam_world.ts",
+        "freeroam_generation.ts",
+        "freeroam_forest_generation.ts",
+        "freeroam_forest_river.ts",
+        "freeroam_highway_generation.ts",
         "freeroam_cave_generation.ts",
+        "freeroam_menu.ts",
         "race.ts",
         "minimap.ts",
         "ai_racers.ts",
