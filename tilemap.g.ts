@@ -287,6 +287,44 @@ c c c c 6 7 7 6 7 7 7 6 7 6 6 c
 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 8 
 8 8 8 8 8 8 8 8 9 9 8 8 8 8 8 8 
 `;
+            case "myTiles.tile4":
+            case "HighwayHighlightHorizontal":return img`
+c c c c c c c c c c c c c c c c 
+b b b b b b b b b b b b b b b b 
+d d d d d d d d d d d d d d d d 
+b b b b b b b b b b b b b b b b 
+b b b b b b b b b b b b b b b b 
+b b b b b b b b b b b b b b b b 
+b b b b b b b b b b b b b b b b 
+b 5 5 5 5 d b b b 5 5 5 5 d b b 
+b d 5 5 5 5 b b b d 5 5 5 5 b b 
+b b b b b b b b b b b b b b b b 
+b b b b b b b b b b b b b b b b 
+b b b b b b b b b b b b b b b b 
+b b b b b b b b b b b b b b b b 
+d d d d d d d d d d d d d d d d 
+b b b b b b b b b b b b b b b b 
+c c c c c c c c c c c c c c c c 
+`;
+            case "myTiles.tile5":
+            case "HighwayHighlightVertical":return img`
+c b d b b b b b b b b b b d b c 
+c b d b b b b d 5 b b b b d b c 
+c b d b b b b 5 5 b b b b d b c 
+c b d b b b b 5 5 b b b b d b c 
+c b d b b b b 5 5 b b b b d b c 
+c b d b b b b 5 d b b b b d b c 
+c b d b b b b b b b b b b d b c 
+c b d b b b b b b b b b b d b c 
+c b d b b b b b b b b b b d b c 
+c b d b b b b d 5 b b b b d b c 
+c b d b b b b 5 5 b b b b d b c 
+c b d b b b b 5 5 b b b b d b c 
+c b d b b b b 5 5 b b b b d b c 
+c b d b b b b 5 d b b b b d b c 
+c b d b b b b b b b b b b d b c 
+c b d b b b b b b b b b b d b c 
+`;
         }
         return null;
     })
@@ -347,6 +385,10 @@ namespace myTiles {
     export const tile18 = image.ofBuffer(hex``);
     //% fixedInstance jres blockIdentity=images._tile
     export const tile19 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile4 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile5 = image.ofBuffer(hex``);
 
     helpers._registerFactory("tilemap", function(name: string) {
         switch(helpers.stringTrim(name)) {
@@ -687,6 +729,10 @@ namespace myTiles {
             case "tile18":return myTiles.tile18;
             case "forestRiverWater":
             case "tile19":return myTiles.tile19;
+            case "HighwayHighlightHorizontal":
+            case "tile4":return myTiles.tile4;
+            case "HighwayHighlightVertical":
+            case "tile5":return myTiles.tile5;
         }
         return null;
     })

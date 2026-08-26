@@ -59,6 +59,15 @@ let highwayBridgeDeckZ = 12
 let highwayRouteLengthSections = 4
 let highwayPlayerCameFromLoop = false
 
+// These three loop anchors are reserved for the nearby Drift encounters.
+// Their starting gates remain within 200 logical tiles of the home spawn for
+// every supported route length (four through seven sections). Other eligible
+// anchors inside that radius are suppressed so there are exactly three nearby
+// loops; anchors beyond it retain the ordinary seeded 24% generation chance.
+let highwayGuaranteedLoopRadiusTiles = 200
+let highwayGuaranteedLoopAnchorXs = [1, -3, 1]
+let highwayGuaranteedLoopAnchorYs = [1, 1, -3]
+
 /** Caches base tiles and floor-backed road decorations in fixed order. */
 function initializeHighwayFreeRoamTileset() {
     if (highwayFreeRoamTileset.length > 0) {
@@ -136,10 +145,47 @@ function highwayBlockUsesTurns(blockX: number, blockY: number) {
     ) % 2 == 0
 }
 
+/** Whether one eligible anchor is one of the three reserved home-area loops. */
+function highwayGuaranteedLoopAnchorAt(anchorX: number, anchorY: number) {
+    for (let index = 0;
+        index < highwayGuaranteedLoopAnchorXs.length;
+        index++) {
+        if (highwayGuaranteedLoopAnchorXs[index] == anchorX &&
+            highwayGuaranteedLoopAnchorYs[index] == anchorY) {
+            return true
+        }
+    }
+    return false
+}
+
+/**
+ * Whether the first Drift gate of a loop is within the reserved home radius.
+ * The home spawn is logical world tile (4,4); subtracting it leaves the gate
+ * displacement below, expressed entirely in logical tiles.
+ */
+function highwayLoopStartIsWithinHomeRadius(
+    anchorX: number,
+    anchorY: number
+) {
+    let deltaTileX = (anchorX * highwayRouteLengthSections + 1) *
+        freeRoamSectionSize
+    let deltaTileY = anchorY * highwayRouteLengthSections *
+        freeRoamSectionSize
+    return deltaTileX * deltaTileX + deltaTileY * deltaTileY <=
+        highwayGuaranteedLoopRadiusTiles * highwayGuaranteedLoopRadiusTiles
+}
+
 /** True only for sparse, non-overlapping macro-cell loop anchors. */
 function highwayLoopAnchorAt(anchorX: number, anchorY: number) {
     if (freeRoamPositiveModulo(anchorX - 1, 4) != 0 ||
         freeRoamPositiveModulo(anchorY - 1, 4) != 0) {
+        return false
+    }
+
+    if (highwayGuaranteedLoopAnchorAt(anchorX, anchorY)) {
+        return true
+    }
+    if (highwayLoopStartIsWithinHomeRadius(anchorX, anchorY)) {
         return false
     }
 
@@ -163,6 +209,18 @@ function highwayVerticalMacroEdgeBelongsToLoop(x: number, topY: number) {
         highwayLoopAnchorAt(x - 1, topY)
 }
 
+/**
+ * Directly joins the northern home backbone to the northeast reserved loop.
+ * Its other seeded connections can form a very long detour on rare seeds;
+ * this single feeder keeps all three guaranteed loops reliably reachable.
+ */
+function highwayHorizontalMacroEdgeIsGuaranteedFeeder(
+    leftX: number,
+    y: number
+) {
+    return leftX == 0 && y == -3
+}
+
 /** Converts a section coordinate to its containing seeded routing cell. */
 function highwayMacroCoordinate(sectionCoordinate: number) {
     return Math.floor(sectionCoordinate / highwayRouteLengthSections)
@@ -170,7 +228,9 @@ function highwayMacroCoordinate(sectionCoordinate: number) {
 
 /** Stable reciprocal horizontal edge in the large-scale route graph. */
 function highwayHorizontalMacroConnection(leftX: number, y: number) {
-    if (y == 0 || highwayHorizontalMacroEdgeBelongsToLoop(leftX, y)) {
+    if (y == 0 ||
+        highwayHorizontalMacroEdgeBelongsToLoop(leftX, y) ||
+        highwayHorizontalMacroEdgeIsGuaranteedFeeder(leftX, y)) {
         return true
     }
 

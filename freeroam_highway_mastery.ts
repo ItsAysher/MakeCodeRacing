@@ -2,6 +2,7 @@
 
 namespace SpriteKind {
     export let HighwayDriftGate = SpriteKind.create()
+    export let HighwayDriftNpc = SpriteKind.create()
 }
 
 // These two values are permanent progression. save_system.ts serializes them.
@@ -14,18 +15,23 @@ let highwayDriftEncounterSeed = -1
 let highwayDriftChallengeAnchorXs: number[] = []
 let highwayDriftChallengeAnchorYs: number[] = []
 let highwayDriftGateSprites: Sprite[] = []
+let highwayDriftNpcSprites: Sprite[] = []
 let highwayDriftRenderedSectionX = 1000000000
 let highwayDriftRenderedSectionY = 1000000000
 let highwayActiveDriftChallenge = -1
 let highwayActiveDriftWaypoint = 0
 let highwayDriftPlayerWasInsideGate = false
 let highwayDriftMessageReadyAt = 0
+let highwayDriftNpcNearbyMask = 0
+let highwayDriftNpcDialogueOpen = false
 
 let highwayDriftChallengeCount = 3
 let highwayDriftUniqueGateCount = 8
 let highwayDriftGateAlongRoadHalfThickness = 14
 let highwayDriftGateAcrossRoadHalfSpan = 56
 let highwayDriftAbandonMarginTiles = freeRoamSectionSize * 2
+let highwayDriftNpcAlertDistanceTiles = 6
+let highwayDriftNpcRearmDistanceTiles = 8
 
 /** Returns whether one of the three permanent highway trials is complete. */
 function highwayDriftChallengeIsComplete(challengeIndex: number) {
@@ -51,41 +57,32 @@ function destroyHighwayDriftGateSprites() {
     highwayDriftGateSprites = []
 }
 
+/** Removes streamed NPC markers without changing any challenge progress. */
+function destroyHighwayDriftNpcSprites() {
+    for (let npc of highwayDriftNpcSprites) {
+        npc.destroy()
+    }
+    highwayDriftNpcSprites = []
+}
+
 /**
- * Selects the nearest three real generated loops in a stable spiral order.
- * Loop existence already comes from the highway seed, so the encounters return
- * to exactly the same logical coordinates whenever that seed is restored.
+ * Uses the same three reserved anchors as the highway generator. Keeping the
+ * encounter and terrain selections together guarantees that every challenge
+ * has a real loop and that each starting gate is within 200 tiles of home.
  */
 function chooseHighwayDriftChallengeLoops() {
     highwayDriftChallengeAnchorXs = []
     highwayDriftChallengeAnchorYs = []
 
-    // Loop anchors occur at 1 + 4n in each macro-grid direction. Ten rings
-    // provide hundreds of candidates, while ordinary seeds find three nearby.
-    for (let radius = 0;
-        radius <= 10 &&
-        highwayDriftChallengeAnchorXs.length < highwayDriftChallengeCount;
-        radius++) {
-        for (let gridY = -radius;
-            gridY <= radius &&
-            highwayDriftChallengeAnchorXs.length < highwayDriftChallengeCount;
-            gridY++) {
-            for (let gridX = -radius;
-                gridX <= radius &&
-                highwayDriftChallengeAnchorXs.length < highwayDriftChallengeCount;
-                gridX++) {
-                if (Math.max(Math.abs(gridX), Math.abs(gridY)) != radius) {
-                    continue
-                }
-
-                let anchorX = 1 + gridX * 4
-                let anchorY = 1 + gridY * 4
-                if (highwayLoopAnchorAt(anchorX, anchorY)) {
-                    highwayDriftChallengeAnchorXs.push(anchorX)
-                    highwayDriftChallengeAnchorYs.push(anchorY)
-                }
-            }
-        }
+    for (let index = 0;
+        index < highwayGuaranteedLoopAnchorXs.length;
+        index++) {
+        highwayDriftChallengeAnchorXs.push(
+            highwayGuaranteedLoopAnchorXs[index]
+        )
+        highwayDriftChallengeAnchorYs.push(
+            highwayGuaranteedLoopAnchorYs[index]
+        )
     }
 }
 
@@ -146,6 +143,26 @@ function highwayDriftGateWorldTileY(
         freeRoamSectionSize + 4
 }
 
+/**
+ * Logical location of the placeholder racer beside a challenge's start gate.
+ * Gate zero always crosses a horizontal road heading east, so the racer sits
+ * two tiles before it on the north shoulder and faces into the course.
+ */
+function highwayDriftNpcWorldTileX(challengeIndex: number) {
+    return highwayDriftGateWorldTileX(challengeIndex, 0) - 2
+}
+
+function highwayDriftNpcWorldTileY(challengeIndex: number) {
+    return highwayDriftGateWorldTileY(challengeIndex, 0) - 4
+}
+
+/** Builds a visible B2 placeholder racer for one highway challenge. */
+function highwayDriftNpcImage(challengeComplete: boolean) {
+    let npcImage = allCarBodyImages[1][CarImageDirection.Right].clone()
+    npcImage.replace(10, challengeComplete ? 7 : 8)
+    return npcImage
+}
+
 /** Minimum gate speed rises modestly across the three loop trials. */
 function highwayDriftChallengeMinimumSpeed(challengeIndex: number) {
     return playerMaximumSpeed * (0.45 + challengeIndex * 0.07)
@@ -182,17 +199,17 @@ function highwayDriftGateImage(
 
     let gateImage: Image = null
     if (horizontalRoad) {
-        gateImage = image.create(16, 112)
+        gateImage = image.create(16, 128)
         gateImage.drawTransparentImage(firstCone, 0, 0)
-        gateImage.drawTransparentImage(secondCone, 0, 96)
-        gateImage.drawLine(7, 16, 7, 95, markerColor)
-        gateImage.drawLine(8, 16, 8, 95, markerColor)
+        gateImage.drawTransparentImage(secondCone, 0, 112)
+        gateImage.drawLine(7, 16, 7, 111, markerColor)
+        gateImage.drawLine(8, 16, 8, 111, markerColor)
     } else {
-        gateImage = image.create(112, 16)
+        gateImage = image.create(128, 16)
         gateImage.drawTransparentImage(firstCone, 0, 0)
-        gateImage.drawTransparentImage(secondCone, 96, 0)
-        gateImage.drawLine(16, 7, 95, 7, markerColor)
-        gateImage.drawLine(16, 8, 95, 8, markerColor)
+        gateImage.drawTransparentImage(secondCone, 112, 0)
+        gateImage.drawLine(16, 7, 111, 7, markerColor)
+        gateImage.drawLine(16, 8, 111, 8, markerColor)
     }
     return gateImage
 }
@@ -229,6 +246,7 @@ function highwayDriftDisplayedWaypoint(challengeIndex: number) {
 /** Recreates only gate sprites that fall inside the currently streamed map. */
 function rebuildHighwayDriftGateSprites() {
     destroyHighwayDriftGateSprites()
+    destroyHighwayDriftNpcSprites()
     highwayDriftRenderedSectionX = highwayFreeRoamCenterWorldSectionX()
     highwayDriftRenderedSectionY = highwayFreeRoamCenterWorldSectionY()
 
@@ -237,12 +255,32 @@ function rebuildHighwayDriftGateSprites() {
         challenge++) {
         let challengeComplete = highwayDriftChallengeIsComplete(challenge)
         let displayedWaypoint = highwayDriftDisplayedWaypoint(challenge)
+        let npcWorldTileX = highwayDriftNpcWorldTileX(challenge)
+        let npcWorldTileY = highwayDriftNpcWorldTileY(challenge)
+
+        if (highwayDriftTileIsInWindow(
+            npcWorldTileX, npcWorldTileY
+        )) {
+            let npc = sprites.create(
+                highwayDriftNpcImage(challengeComplete),
+                SpriteKind.HighwayDriftNpc
+            )
+            npc.setFlag(SpriteFlag.GhostThroughWalls, true)
+            npc.setPosition(
+                highwayDriftWindowPixelX(npcWorldTileX),
+                highwayDriftWindowPixelY(npcWorldTileY)
+            )
+            npc.z = 15
+            npc.data.challenge = challenge
+            highwayDriftNpcSprites.push(npc)
+        }
 
         for (let waypoint = 0;
             waypoint < highwayDriftUniqueGateCount;
             waypoint++) {
             let worldTileX = highwayDriftGateWorldTileX(challenge, waypoint)
             let worldTileY = highwayDriftGateWorldTileY(challenge, waypoint)
+            let horizontalRoad = highwayDriftGateIsOnHorizontalRoad(waypoint)
             if (!highwayDriftTileIsInWindow(worldTileX, worldTileY)) {
                 continue
             }
@@ -251,15 +289,22 @@ function rebuildHighwayDriftGateSprites() {
                 highwayDriftGateImage(
                     challengeComplete,
                     !challengeComplete && waypoint == displayedWaypoint,
-                    highwayDriftGateIsOnHorizontalRoad(waypoint)
+                    horizontalRoad
                 ),
                 SpriteKind.HighwayDriftGate
             )
             gate.setFlag(SpriteFlag.Ghost, true)
-            gate.setPosition(
-                highwayDriftWindowPixelX(worldTileX),
-                highwayDriftWindowPixelY(worldTileY)
-            )
+            let gatePixelX = highwayDriftWindowPixelX(worldTileX)
+            let gatePixelY = highwayDriftWindowPixelY(worldTileY)
+            // An eight-tile road has its geometric center between tiles 3 and
+            // 4. The logical waypoint uses tile 4, so shift the gate half a
+            // tile across the road to center its cones on shoulder tiles 0/7.
+            if (horizontalRoad) {
+                gatePixelY -= freeRoamTileSize / 2
+            } else {
+                gatePixelX -= freeRoamTileSize / 2
+            }
+            gate.setPosition(gatePixelX, gatePixelY)
             gate.z = 14
             gate.data.challenge = challenge
             gate.data.waypoint = waypoint
@@ -275,6 +320,8 @@ function startHighwayDriftEncounter() {
     highwayActiveDriftChallenge = -1
     highwayActiveDriftWaypoint = 0
     highwayDriftPlayerWasInsideGate = false
+    highwayDriftNpcNearbyMask = 0
+    highwayDriftNpcDialogueOpen = false
     chooseHighwayDriftChallengeLoops()
     rebuildHighwayDriftGateSprites()
 }
@@ -285,7 +332,61 @@ function stopHighwayDriftEncounter() {
     highwayActiveDriftChallenge = -1
     highwayActiveDriftWaypoint = 0
     highwayDriftPlayerWasInsideGate = false
+    highwayDriftNpcNearbyMask = 0
+    highwayDriftNpcDialogueOpen = false
     destroyHighwayDriftGateSprites()
+    destroyHighwayDriftNpcSprites()
+}
+
+/**
+ * Opens one NPC introduction per approach, with a larger exit radius so minor
+ * steering near the boundary cannot repeatedly reopen the blocking dialogue.
+ */
+function updateHighwayDriftNpcDialogue() {
+    let playerWorldTileX = highwayFreeRoamPlayerWorldTileX()
+    let playerWorldTileY = highwayFreeRoamPlayerWorldTileY()
+    let showedDialogueThisUpdate = false
+
+    for (let challenge = 0;
+        challenge < highwayDriftChallengeAnchorXs.length;
+        challenge++) {
+        let challengeBit = 1 << challenge
+        let offsetX = Math.abs(
+            playerWorldTileX - highwayDriftNpcWorldTileX(challenge)
+        )
+        let offsetY = Math.abs(
+            playerWorldTileY - highwayDriftNpcWorldTileY(challenge)
+        )
+        let npcWasNearby = (highwayDriftNpcNearbyMask & challengeBit) != 0
+
+        if (offsetX <= highwayDriftNpcAlertDistanceTiles &&
+            offsetY <= highwayDriftNpcAlertDistanceTiles) {
+            if (!npcWasNearby) {
+                highwayDriftNpcNearbyMask |= challengeBit
+
+                if (!showedDialogueThisUpdate &&
+                    !highwayDriftNpcDialogueOpen &&
+                    highwayActiveDriftChallenge < 0 &&
+                    !highwayDriftChallengeIsComplete(challenge)) {
+                    showedDialogueThisUpdate = true
+                    highwayDriftNpcDialogueOpen = true
+                    player.vx = 0
+                    player.vy = 0
+                    game.showLongText(
+                        "Drift Racer: The yellow gate beside me starts Drift Challenge " +
+                        (challenge + 1) +
+                        ". Cross it at speed, then follow each highlighted gate around the loop.",
+                        DialogLayout.Bottom
+                    )
+                    highwayDriftNpcDialogueOpen = false
+                }
+            }
+        } else if (npcWasNearby &&
+            (offsetX > highwayDriftNpcRearmDistanceTiles ||
+                offsetY > highwayDriftNpcRearmDistanceTiles)) {
+            highwayDriftNpcNearbyMask &= ~challengeBit
+        }
+    }
 }
 
 /** Shows a short car-attached message without pausing the driving session. */
@@ -497,5 +598,6 @@ game.onUpdate(function () {
     }
 
     updateHighwayDriftTrialAbandonment()
+    updateHighwayDriftNpcDialogue()
     updateHighwayDriftGateProgress()
 })
