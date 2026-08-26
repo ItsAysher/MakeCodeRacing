@@ -14,6 +14,8 @@ let freeRoamMenuPlayerMapY = 0
 let freeRoamMenuHomeDeltaX = 0
 let freeRoamMenuHomeDeltaY = 0
 let freeRoamMenuCoordinateText = "(0,0)"
+let freeRoamMenuWindowWorldTileLeft = 0
+let freeRoamMenuWindowWorldTileTop = 0
 
 /** Prints one centered line on the fixed 160-pixel-wide Arcade screen. */
 function printCenteredOnFreeRoamMenu(
@@ -171,6 +173,150 @@ function drawFreeRoamHomeArrow(
     )
 }
 
+/** Draws one numbered arrow toward a discovered activity outside the map. */
+function drawFreeRoamActivityArrow(
+    target: Image,
+    playerX: number,
+    playerY: number,
+    deltaX: number,
+    deltaY: number,
+    activityIndex: number,
+    color: number
+) {
+    let directionX = 0
+    let directionY = 0
+    let horizontalDistance = Math.abs(deltaX)
+    let verticalDistance = Math.abs(deltaY)
+    if (horizontalDistance == 0 && verticalDistance == 0) {
+        return
+    }
+
+    if (horizontalDistance * 2 >= verticalDistance) {
+        directionX = deltaX > 0 ? 1 : -1
+    }
+    if (verticalDistance * 2 >= horizontalDistance) {
+        directionY = deltaY > 0 ? 1 : -1
+    }
+
+    // Concentric distances keep up to three arrows legible even when several
+    // discovered activities lie in the same general direction.
+    let tailDistance = 13 + activityIndex * 7
+    let headDistance = tailDistance + 5
+    let arrowTailX = playerX + directionX * tailDistance
+    let arrowTailY = playerY + directionY * tailDistance
+    let arrowHeadX = playerX + directionX * headDistance
+    let arrowHeadY = playerY + directionY * headDistance
+    let arrowBaseX = arrowHeadX - directionX * 3
+    let arrowBaseY = arrowHeadY - directionY * 3
+    let perpendicularX = -directionY
+    let perpendicularY = directionX
+
+    target.drawLine(
+        arrowTailX, arrowTailY, arrowHeadX, arrowHeadY, color
+    )
+    target.drawLine(
+        arrowHeadX,
+        arrowHeadY,
+        arrowBaseX + perpendicularX * 2,
+        arrowBaseY + perpendicularY * 2,
+        color
+    )
+    target.drawLine(
+        arrowHeadX,
+        arrowHeadY,
+        arrowBaseX - perpendicularX * 2,
+        arrowBaseY - perpendicularY * 2,
+        color
+    )
+    target.print(
+        "" + (activityIndex + 1),
+        arrowHeadX + perpendicularX * 4 - 2,
+        arrowHeadY + perpendicularY * 4 - 2,
+        color,
+        image.font5
+    )
+}
+
+/** Draws loaded activity markers and off-window arrows for discovered sites. */
+function drawFreeRoamMapActivities(
+    target: Image,
+    mapLeft: number,
+    mapTop: number,
+    displayWidth: number,
+    displayHeight: number,
+    playerMarkerX: number,
+    playerMarkerY: number
+) {
+    let discoveredMask = freeRoamMapActivityDiscoveredMask(
+        selectedFreeRoamTheme
+    )
+    let activityColor = freeRoamMapActivityColor(selectedFreeRoamTheme)
+    let playerWorldTileX = freeRoamPlayerWorldTileX()
+    let playerWorldTileY = freeRoamPlayerWorldTileY()
+
+    for (let activityIndex = 0;
+        activityIndex < freeRoamMapActivityCount;
+        activityIndex++) {
+        let activityBit = 1 << activityIndex
+        if (!(discoveredMask & activityBit) ||
+            !freeRoamMapActivityIsAvailable(
+                selectedFreeRoamTheme, activityIndex
+            )) {
+            continue
+        }
+
+        let worldTileX = freeRoamMapActivityWorldTileX(
+            selectedFreeRoamTheme, activityIndex
+        )
+        let worldTileY = freeRoamMapActivityWorldTileY(
+            selectedFreeRoamTheme, activityIndex
+        )
+        let physicalTileX = worldTileX - freeRoamMenuWindowWorldTileLeft
+        let physicalTileY = worldTileY - freeRoamMenuWindowWorldTileTop
+        let activityIsOnMap = physicalTileX >= 0 &&
+            physicalTileX < freeRoamWindowTileSize &&
+            physicalTileY >= 0 &&
+            physicalTileY < freeRoamWindowTileSize
+
+        if (activityIsOnMap) {
+            let sourceMapX = (physicalTileX * freeRoamTileSize +
+                freeRoamTileSize / 2) >> MinimapScale.Quarter
+            let sourceMapY = (physicalTileY * freeRoamTileSize +
+                freeRoamTileSize / 2) >> MinimapScale.Quarter
+            let markerX = mapLeft + Math.idiv(
+                sourceMapX * displayWidth,
+                freeRoamMenuMapImage.width
+            )
+            let markerY = mapTop + Math.idiv(
+                sourceMapY * displayHeight,
+                freeRoamMenuMapImage.height
+            )
+            target.fillRect(markerX - 3, markerY - 3, 7, 7, 15)
+            target.fillRect(
+                markerX - 2, markerY - 2, 5, 5, activityColor
+            )
+            target.setPixel(markerX, markerY, 15)
+            target.print(
+                "" + (activityIndex + 1),
+                markerX + 4,
+                markerY - 2,
+                activityColor,
+                image.font5
+            )
+        } else {
+            drawFreeRoamActivityArrow(
+                target,
+                playerMarkerX,
+                playerMarkerY,
+                worldTileX - playerWorldTileX,
+                worldTileY - playerWorldTileY,
+                activityIndex,
+                activityColor
+            )
+        }
+    }
+}
+
 /** Draws the complete active generated tile window on a 160x120 screen. */
 function drawFreeRoamMapScreen() {
     let mapScreen = image.create(160, 120)
@@ -233,6 +379,16 @@ function drawFreeRoamMapScreen() {
         freeRoamMenuMapImage.height
     )
 
+    drawFreeRoamMapActivities(
+        mapScreen,
+        mapLeft,
+        mapTop,
+        displayWidth,
+        displayHeight,
+        markerX,
+        markerY
+    )
+
     // High-contrast player marker: white border with a red center.
     mapScreen.fillRect(markerX - 3, markerY - 3, 7, 7, 15)
     mapScreen.fillRect(markerX - 2, markerY - 2, 5, 5, 2)
@@ -250,7 +406,9 @@ function drawFreeRoamMapScreen() {
     )
     printCenteredOnFreeRoamMenu(
         mapScreen,
-        "RED:YOU ARROW:HOME B:BACK",
+        "R:YOU HOME " +
+            freeRoamMapActivityLegend(selectedFreeRoamTheme) +
+            " B:BACK",
         113,
         10,
         image.font5
@@ -269,6 +427,27 @@ function captureFreeRoamMap() {
     freeRoamMenuHomeDeltaY = freeRoamHomeWorldTileY() -
         freeRoamPlayerWorldTileY()
     freeRoamMenuCoordinateText = freeRoamPlayerCoordinateText()
+
+    if (selectedFreeRoamTheme == FreeRoamTheme.Forest) {
+        freeRoamMenuWindowWorldTileLeft =
+            (forestFreeRoamCenterSectionX() - 1) *
+            freeRoamSectionSize
+        freeRoamMenuWindowWorldTileTop =
+            (forestFreeRoamCenterSectionY() - 1) *
+            freeRoamSectionSize
+    } else if (selectedFreeRoamTheme == FreeRoamTheme.Highway) {
+        freeRoamMenuWindowWorldTileLeft =
+            highwayFreeRoamWindowWorldTileLeft()
+        freeRoamMenuWindowWorldTileTop =
+            highwayFreeRoamWindowWorldTileTop()
+    } else {
+        freeRoamMenuWindowWorldTileLeft =
+            (caveFreeRoamCenterWorldSectionX() - 1) *
+            freeRoamSectionSize
+        freeRoamMenuWindowWorldTileTop =
+            (caveFreeRoamCenterWorldSectionY() - 1) *
+            freeRoamSectionSize
+    }
 }
 
 /** Returns to driving without changing or regenerating the active world. */

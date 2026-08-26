@@ -51,6 +51,10 @@ Defines the Forest, Highway, and Cave themes, dispatches player/home coordinates
 
 Captures the player's logical spawn tile as `(0,0)` at the start of every Free Roam session and reports the player's current tile displacement from that origin. Coordinates remain stable while the procedural generators recycle and rebase their visible tile windows; positive X points right and positive Y points down.
 
+### `freeroam_map_activities.ts`
+
+Stores map discovery for the three Forest racers, three Highway drift racers, and three Cave statues. An activity is revealed only after its chunk enters the generated 3x3 window; its discovery bit and logical world-tile position are then saved so an off-window map arrow can continue pointing toward it after streaming or restarting the browser. Collected Cave statues stop appearing as targets, while Forest rematch racers and completed Highway landmarks remain available.
+
 ### `freeroam_generation.ts`
 
 Contains procedural systems shared by every Free Roam theme: persistent master-seed creation, deterministic theme-seed derivation and coordinate hashing, signed-coordinate helpers, fixed 24x24 streaming-map creation, logical/physical coordinate conversion, section-boundary detection, seamless player rebasing, selected-generator start/stop dispatch, and the single active streaming update callback.
@@ -103,7 +107,7 @@ Owns the L-key Drift behavior independently from its Highway unlock encounter. O
 
 ### `freeroam_menu.ts`
 
-Remaps the simulator Menu input to the keyboard's M key and replaces it with a Free Roam-only pause menu containing Display Map and Exit Freeroam. Display Map renders the complete currently generated 24x24 tile window at a near-full-screen scale, marks the player, and draws an arrow toward the definitive home chunk. The standard Arcade system menu remains available outside Free Roam.
+Remaps the simulator Menu input to the keyboard's M key and replaces it with a Free Roam-only pause menu containing Display Map and Exit Freeroam. Display Map renders the complete currently generated 24x24 tile window at a near-full-screen scale, marks the player, and draws an arrow toward the definitive home chunk. Discovered activities inside the window receive numbered theme-colored markers—green Forest NPCs, yellow Highway drift NPCs, or purple Cave statues—while discovered targets outside the window receive numbered direction arrows around the player. The standard Arcade system menu remains available outside Free Roam.
 
 ### `game_flow.ts`
 
@@ -179,7 +183,7 @@ Current race settings are:
 
 ### `save_system.ts`
 
-Stores browser-persistent progression as a versioned number-array record and stores the player name under a separate string key so ordinary progression updates do not rewrite it. It loads and validates cash, race statistics, owned parts and paints, equipped parts, equipped colors, player identity, the permanent Free Roam seed, carried/deposited statues, NPC victories, loop trials, and ability unlocks. Older version-1 saves without mastery fields remain compatible, and Reset Progress restores clean defaults for both garage and procedural-world state.
+Stores browser-persistent progression as a versioned number-array record and stores the player name under a separate string key so ordinary progression updates do not rewrite it. It loads and validates cash, race statistics, owned parts and paints, equipped parts, equipped colors, player identity, the permanent Free Roam seed, carried/deposited statues, NPC victories, loop trials, ability unlocks, and activity-map discovery coordinates. Older version-1 saves without mastery or map-discovery fields remain compatible, and Reset Progress restores clean defaults for both garage and procedural-world state.
 
 ### `sprite_kinds.ts`
 

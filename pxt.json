@@ -29,6 +29,7 @@
         "game_flow.ts",
         "freeroam_world.ts",
         "freeroam_coordinates.ts",
+        "freeroam_map_activities.ts",
         "freeroam_generation.ts",
         "freeroam_forest_generation.ts",
         "freeroam_forest_river.ts",

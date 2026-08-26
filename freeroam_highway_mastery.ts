@@ -261,6 +261,12 @@ function rebuildHighwayDriftGateSprites() {
         if (highwayDriftTileIsInWindow(
             npcWorldTileX, npcWorldTileY
         )) {
+            discoverFreeRoamMapActivity(
+                FreeRoamTheme.Highway,
+                challenge,
+                npcWorldTileX,
+                npcWorldTileY
+            )
             let npc = sprites.create(
                 highwayDriftNpcImage(challengeComplete),
                 SpriteKind.HighwayDriftNpc

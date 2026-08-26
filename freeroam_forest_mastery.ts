@@ -207,6 +207,13 @@ function updateForestMasteryNpcs() {
             continue
         }
 
+        discoverFreeRoamMapActivity(
+            FreeRoamTheme.Forest,
+            encounter,
+            forestMasteryEncounterWorldTileXs[encounter],
+            forestMasteryEncounterWorldTileYs[encounter]
+        )
+
         if (encounter >= forestMasteryNpcSprites.length ||
             !forestMasteryNpcSprites[encounter]) {
             let npc = sprites.create(

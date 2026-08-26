@@ -285,6 +285,14 @@ function caveMasteryRefreshWorldSprites() {
             caveMasterySiteWorldTileX[siteIndex],
             caveMasterySiteWorldTileY[siteIndex]
         )
+        if (!statueWasCollected && caveMasterySiteSprites[siteIndex]) {
+            discoverFreeRoamMapActivity(
+                FreeRoamTheme.Cave,
+                siteIndex,
+                caveMasterySiteWorldTileX[siteIndex],
+                caveMasterySiteWorldTileY[siteIndex]
+            )
+        }
     }
 
     caveMasteryHomeSprite = caveMasteryCreateWorldSprite(

@@ -5,6 +5,7 @@ const racingPlayerNameKey = "makecode-racing-player-name"
 const racingSaveVersion = 1
 const racingSaveValueCount = 38
 const racingMasterySaveValueCount = 49
+const racingMapActivitySaveValueCount = 70
 
 function saveBoolean(value: boolean) {
     return value ? 1 : 0
@@ -76,6 +77,24 @@ function saveGameProgress() {
     saveData.push(saveBoolean(forestMasteryBoostUnlockedForSave()))
     saveData.push(highwayDriftChallengeMask)
     saveData.push(saveBoolean(highwayDriftUnlocked))
+
+    // A discovery bit is followed by three stored world-tile coordinate pairs
+    // for Forest, Highway, then Cave. Undiscovered coordinates are harmless.
+    for (let theme = FreeRoamTheme.Forest;
+        theme <= FreeRoamTheme.Cave;
+        theme++) {
+        saveData.push(freeRoamMapActivityDiscoveredMask(theme))
+        for (let activityIndex = 0;
+            activityIndex < freeRoamMapActivityCount;
+            activityIndex++) {
+            saveData.push(freeRoamMapActivityWorldTileX(
+                theme, activityIndex
+            ))
+            saveData.push(freeRoamMapActivityWorldTileY(
+                theme, activityIndex
+            ))
+        }
+    }
     settings.writeNumberArray(racingSaveKey, saveData)
 }
 
@@ -156,6 +175,7 @@ function loadGameProgress() {
     freeRoamGenerationVersion = 1
     resetCaveMasteryProgress()
     resetForestMasteryProgress()
+    resetFreeRoamMapActivityDiscoveries()
     highwayDriftChallengeMask = 0
     highwayDriftUnlocked = false
     if (saveData.length >= racingMasterySaveValueCount) {
@@ -179,6 +199,36 @@ function loadGameProgress() {
         )
         highwayDriftUnlocked = loadBoolean(saveData[48]) ||
             highwayCompletedDriftChallengeCount() >= 3
+    }
+    if (saveData.length >= racingMapActivitySaveValueCount) {
+        let mapSaveIndex = racingMasterySaveValueCount
+        for (let theme = FreeRoamTheme.Forest;
+            theme <= FreeRoamTheme.Cave;
+            theme++) {
+            let discoveredMask = loadWholeNumber(
+                saveData[mapSaveIndex], 0, 7
+            )
+            mapSaveIndex += 1
+            let worldTileXs: number[] = []
+            let worldTileYs: number[] = []
+            for (let activityIndex = 0;
+                activityIndex < freeRoamMapActivityCount;
+                activityIndex++) {
+                worldTileXs.push(loadWholeNumber(
+                    saveData[mapSaveIndex], -1000000000, 1000000000
+                ))
+                worldTileYs.push(loadWholeNumber(
+                    saveData[mapSaveIndex + 1], -1000000000, 1000000000
+                ))
+                mapSaveIndex += 2
+            }
+            loadFreeRoamMapActivityDiscoveries(
+                theme,
+                discoveredMask,
+                worldTileXs,
+                worldTileYs
+            )
+        }
     }
     playerName = settings.readString(racingPlayerNameKey) || ""
     playerPaintRevision += 1
@@ -214,6 +264,7 @@ function resetGameProgress() {
     freeRoamGenerationVersion = 1
     resetCaveMasteryProgress()
     resetForestMasteryProgress()
+    resetFreeRoamMapActivityDiscoveries()
     highwayDriftChallengeMask = 0
     highwayDriftUnlocked = false
     playerPaintRevision += 1
