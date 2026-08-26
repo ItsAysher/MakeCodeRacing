@@ -15,9 +15,26 @@ let freeRoamCenterSectionStartPixel =
 let freeRoamCenterSectionEndPixel =
     freeRoamCenterSectionStartPixel * 2
 
-/** Creates a new session seed. Seeds are intentionally not saved. */
-function createFreeRoamSeed() {
-    return randint(0, 1000000000)
+let freeRoamWorldSeed = 0
+let freeRoamGenerationVersion = 1
+
+/** Creates the permanent world seed on first use and stores it immediately. */
+function ensureFreeRoamWorldSeed() {
+    if (freeRoamWorldSeed == 0) {
+        freeRoamWorldSeed = randint(1, 1000000000)
+        saveGameProgress()
+    }
+    return freeRoamWorldSeed
+}
+
+/** Derives an independent, persistent seed for one procedural theme. */
+function freeRoamThemeSeed(themeSalt: number) {
+    return freeRoamCoordinateHash(
+        ensureFreeRoamWorldSeed(),
+        themeSalt,
+        freeRoamGenerationVersion,
+        1009
+    )
 }
 
 /** Returns a positive remainder for both positive and negative coordinates. */

@@ -876,7 +876,7 @@ function rebuildHighwayFreeRoamWindow() {
 
 /** Starts a fresh streamed Highway session while retaining fixed memory use. */
 function startHighwayFreeRoamGeneration() {
-    highwayFreeRoamSeed = createFreeRoamSeed()
+    highwayFreeRoamSeed = freeRoamThemeSeed(2)
     // Four through seven 8x8 sections gives 32..56 tiles between bends,
     // staying within the requested 30..60-tile straight-run range.
     highwayRouteLengthSections = 4 + freeRoamCoordinateHash(

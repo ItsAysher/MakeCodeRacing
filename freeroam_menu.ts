@@ -13,6 +13,7 @@ let freeRoamMenuPlayerMapX = 0
 let freeRoamMenuPlayerMapY = 0
 let freeRoamMenuHomeDeltaX = 0
 let freeRoamMenuHomeDeltaY = 0
+let freeRoamMenuCoordinateText = "(0,0)"
 
 /** Prints one centered line on the fixed 160-pixel-wide Arcade screen. */
 function printCenteredOnFreeRoamMenu(
@@ -242,6 +243,13 @@ function drawFreeRoamMapScreen() {
     mapScreen.fillRect(0, 111, 160, 9, 1)
     printCenteredOnFreeRoamMenu(
         mapScreen,
+        "COORDINATES " + freeRoamMenuCoordinateText,
+        2,
+        10,
+        image.font5
+    )
+    printCenteredOnFreeRoamMenu(
+        mapScreen,
         "RED:YOU ARROW:HOME B:BACK",
         113,
         10,
@@ -260,6 +268,7 @@ function captureFreeRoamMap() {
         freeRoamPlayerWorldTileX()
     freeRoamMenuHomeDeltaY = freeRoamHomeWorldTileY() -
         freeRoamPlayerWorldTileY()
+    freeRoamMenuCoordinateText = freeRoamPlayerCoordinateText()
 }
 
 /** Returns to driving without changing or regenerating the active world. */

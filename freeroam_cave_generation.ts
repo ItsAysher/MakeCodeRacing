@@ -747,7 +747,7 @@ function rebuildCaveFreeRoamWindow() {
 
 /** Creates and activates a fresh browser-only infinite Cave Free Roam world. */
 function startCaveFreeRoamGeneration() {
-    caveFreeRoamSeed = createFreeRoamSeed()
+    caveFreeRoamSeed = freeRoamThemeSeed(3)
     caveCenterWorldSectionX = 0
     caveCenterWorldSectionY = 0
     initializeCaveFreeRoamTileset()

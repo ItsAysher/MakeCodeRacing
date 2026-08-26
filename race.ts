@@ -33,7 +33,7 @@ function startNextRace() {
     updateRaceMinimap()
     game.splash(
         activeRaceDefinition.name + " RACE",
-        "Pass the checkpoint, then cross the finish line!"
+        "Finish the race before your opponents!"
     )
     info.startCountdown(activeRaceDefinition.timeLimit)
 }
@@ -63,7 +63,7 @@ function completeCurrentRace(won: boolean) {
         if (won) {
             game.splash("YOU WIN!", "Prize: $" + prizeMoney)
         } else if (carWrecked) {
-            game.splash("CAR WRECKED", "Upgrade durability or avoid collisions.")
+            game.splash("CAR WRECKED", "Upgrade durability or avoid crashes.")
         } else if (timedOut) {
             game.splash("TIME UP", "Return to the garage and try again.")
         } else {

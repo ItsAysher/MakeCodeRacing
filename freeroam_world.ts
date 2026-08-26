@@ -71,11 +71,12 @@ function startFreeRoam() {
         spawnTile = caveFreeRoamSpawnTile
     }
     tiles.placeOnTile(player, tiles.getTileLocation(spawnTile, spawnTile))
+    initializeFreeRoamCoordinates()
     startPlayerMovement()
     scene.cameraFollowSprite(player)
 
     game.splash(
         freeRoamThemeName() + " FREE ROAM",
-        "Drive freely. Press M for the Free Roam menu."
+        "M Menu | J Boost | K Blink | L Drift"
     )
 }

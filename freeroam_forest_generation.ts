@@ -578,7 +578,7 @@ function rebuildForestFreeRoamWindow() {
 
 /** Creates and activates a new deterministic Forest Free Roam session. */
 function startForestFreeRoamGeneration() {
-    forestFreeRoamSeed = createFreeRoamSeed()
+    forestFreeRoamSeed = freeRoamThemeSeed(1)
     configureForestRiverGeneration(forestFreeRoamSeed)
     forestCenterWorldSectionX = 0
     forestCenterWorldSectionY = 0

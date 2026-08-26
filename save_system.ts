@@ -4,6 +4,7 @@ const racingSaveKey = "makecode-racing-save"
 const racingPlayerNameKey = "makecode-racing-player-name"
 const racingSaveVersion = 1
 const racingSaveValueCount = 38
+const racingMasterySaveValueCount = 49
 
 function saveBoolean(value: boolean) {
     return value ? 1 : 0
@@ -61,6 +62,20 @@ function saveGameProgress() {
     saveData.push(equippedPrimaryColor)
     saveData.push(equippedSecondaryColor)
     saveData.push(equippedAccentColor)
+
+    // Procedural worlds save only their seed and meaningful player changes;
+    // the fixed streaming windows are rebuilt deterministically when revisited.
+    saveData.push(freeRoamWorldSeed)
+    saveData.push(freeRoamGenerationVersion)
+    saveData.push(caveMasteryCollectedMaskForSave())
+    saveData.push(caveMasteryReturnedCountForSave())
+    saveData.push(caveMasteryCarriedStatueForSave())
+    saveData.push(saveBoolean(caveMasteryTeleportUnlockedForSave()))
+    saveData.push(forestMasteryWinsForSave())
+    saveData.push(forestMasteryCompletedMaskForSave())
+    saveData.push(saveBoolean(forestMasteryBoostUnlockedForSave()))
+    saveData.push(highwayDriftChallengeMask)
+    saveData.push(saveBoolean(highwayDriftUnlocked))
     settings.writeNumberArray(racingSaveKey, saveData)
 }
 
@@ -134,6 +149,37 @@ function loadGameProgress() {
     equippedPrimaryColor = loadOwnedPaintColor(saveData[35], 8)
     equippedSecondaryColor = loadOwnedPaintColor(saveData[36], 6)
     equippedAccentColor = loadOwnedPaintColor(saveData[37], 1)
+
+    // Version-1 saves created before Free Roam mastery remain compatible.
+    // They receive a world seed lazily on their first subsequent Free Roam.
+    freeRoamWorldSeed = 0
+    freeRoamGenerationVersion = 1
+    resetCaveMasteryProgress()
+    resetForestMasteryProgress()
+    highwayDriftChallengeMask = 0
+    highwayDriftUnlocked = false
+    if (saveData.length >= racingMasterySaveValueCount) {
+        freeRoamWorldSeed = loadWholeNumber(
+            saveData[38], 0, 1000000000
+        )
+        freeRoamGenerationVersion = loadWholeNumber(saveData[39], 1, 1)
+        loadCaveMasteryProgress(
+            loadWholeNumber(saveData[40], 0, 7),
+            loadWholeNumber(saveData[41], 0, 3),
+            loadWholeNumber(saveData[42], -1, 2),
+            loadBoolean(saveData[43])
+        )
+        loadForestMasteryProgress(
+            loadWholeNumber(saveData[44], 0, 3),
+            loadWholeNumber(saveData[45], 0, 7),
+            loadBoolean(saveData[46])
+        )
+        highwayDriftChallengeMask = loadWholeNumber(
+            saveData[47], 0, 7
+        )
+        highwayDriftUnlocked = loadBoolean(saveData[48]) ||
+            highwayCompletedDriftChallengeCount() >= 3
+    }
     playerName = settings.readString(racingPlayerNameKey) || ""
     playerPaintRevision += 1
     return true
@@ -164,6 +210,12 @@ function resetGameProgress() {
     equippedPrimaryColor = 8
     equippedSecondaryColor = 6
     equippedAccentColor = 1
+    freeRoamWorldSeed = 0
+    freeRoamGenerationVersion = 1
+    resetCaveMasteryProgress()
+    resetForestMasteryProgress()
+    highwayDriftChallengeMask = 0
+    highwayDriftUnlocked = false
     playerPaintRevision += 1
     recalculatePlayerStats()
 }

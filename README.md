@@ -25,12 +25,15 @@ The car can be upgraded in four categories:
 - **A:** Brake.
 - **M:** Open or close the Free Roam menu while using the browser simulator.
 - **B:** Return from the generated-map screen or close the Free Roam menu. It intentionally has no effect during normal driving or races.
+- **J:** Use Boost in any Free Roam after defeating all three forest challengers.
+- **K:** Use Blink in any Free Roam after returning all three stone racer statues.
+- **L:** Hold Drift in any Free Roam after completing all three highway loop trials.
 
 ## Game Files
 
 ### `ai_racers.ts`
 
-Owns the AI race subsystem. It consumes the active race definition, creates and removes opponents, applies randomized paint, steers racers through the cached track route, switches their directional images, and tracks checkpoint and lap progress.
+Owns the AI race subsystem. It consumes the active race definition, creates and removes opponents, applies randomized paint, steers racers through the cached track route, switches their directional images, and tracks valid lap progress.
 
 ### `car_assets.ts`
 
@@ -44,9 +47,13 @@ Contains the paint catalog, ownership and equipped-color state, body-specific so
 
 Defines the Forest, Highway, and Cave themes, dispatches player/home coordinates for the map screen, creates the Free Roam player on the selected generator's spawn, and presents the mode instructions.
 
+### `freeroam_coordinates.ts`
+
+Captures the player's logical spawn tile as `(0,0)` at the start of every Free Roam session and reports the player's current tile displacement from that origin. Coordinates remain stable while the procedural generators recycle and rebase their visible tile windows; positive X points right and positive Y points down.
+
 ### `freeroam_generation.ts`
 
-Contains procedural systems shared by every Free Roam theme: session seed creation, deterministic coordinate hashing, signed-coordinate helpers, fixed 24x24 streaming-map creation, logical/physical coordinate conversion, section-boundary detection, seamless player rebasing, selected-generator start/stop dispatch, and the single active streaming update callback.
+Contains procedural systems shared by every Free Roam theme: persistent master-seed creation, deterministic theme-seed derivation and coordinate hashing, signed-coordinate helpers, fixed 24x24 streaming-map creation, logical/physical coordinate conversion, section-boundary detection, seamless player rebasing, selected-generator start/stop dispatch, and the single active streaming update callback.
 
 ### `freeroam_forest_generation.ts`
 
@@ -56,15 +63,43 @@ Owns infinite Forest Free Roam generation. It preserves the authored 32x32 map i
 
 Owns all Forest river topology and rendering. Each 64x64 logical world region has a 35% chance to contain one isolated horizontal or vertical river measuring 30-50 tiles from end to end. Smoothly eased deterministic centerlines produce broad S-curves without disconnected steps, while the inset endpoints prevent rivers in neighboring regions from joining into enclosing boundaries. Water is two or three tiles wide and solid; `sprites.castle.tilePath5` forms the exact one-tile bank around the final water mask. The river is applied after base-section construction, so water and sand replace any trail, scenery, wall, or decoration previously stamped at those coordinates.
 
+### `freeroam_forest_mastery.ts`
+
+Places three seed-stable B2 forest challengers on generated trails. Each NPC opens a different native MakeCode track with its own start positions, finish gate, and authored waypoint route. Their AI uses the standard velocity-seeking racer steering at 84%, 89%, and 94% of the player's unboosted top speed, keeping the challenges beatable while scaling with upgrades. Three unique victories permanently unlock Boost.
+
 ### `freeroam_highway_generation.ts`
 
 Owns infinite Highway Free Roam generation. It preserves the authored home map, extends its original six-wide exits directly into generated six-lane roads, and makes route decisions on a seeded macro grid so straight sections span 32-56 tiles before the next gradual turn or junction. Traffic cones are generated only on the solid shoulder tiles; driveable lanes can contain cosmetic cracks but never cones. Sparse selected cells become complete rounded loop areas with an elevated vertical chord: a car arriving from the loop rim is deliberately rendered below the cached overhang, while a car on the chord renders above it. Both routes share an unobstructed collision plane. Stable decoration, grass variants, and at most nine active bridge sprites use fixed memory.
+
+### `freeroam_highway_mastery.ts`
+
+Selects the nearest three seed-stable generated highway loops as drift trials. Eight streamed, orientation-aware cone gates span all six lanes and lead the player clockwise around each loop at a progressively higher minimum speed. A trial cancels if the player returns through its start too soon or leaves the loop area, so another trial can always begin. Completed gates remain green when revisited. Clearing all three trials permanently unlocks Drift.
 
 ### `freeroam_cave_generation.ts`
 
 Owns browser-only infinite Cave Free Roam generation. The authored 32x32 cave is the definitive center of the world and is placed inside a 40x40 aligned home region whose four wrapper tunnels extend its existing edge sockets into procedural branches. Beyond those edges, reciprocal rules assemble Straight, Turn, T-junction, and Cross sections without mismatched openings or dead ends. A reusable 3x3 window of 8x8 sections follows the player without changing velocity.
 
 Cave rubble, moss, and solid crystals are selected deterministically so they remain stable when the window rebases. Each decoration is composited over a verified cave floor image; walls never receive decorations. The spawn remains clear, and crystals are excluded from the main base-map cross and generated driving corridors.
+
+### `freeroam_cave_mastery.ts`
+
+Places three stone B2 racer statues on placeholder pedestals at distant seed-stable cave sites. The player carries one at a time back to the home altar; collected sites retain empty pedestals after unloading, revisiting, or restarting the game. Returning all three permanently unlocks Blink.
+
+### `ability_input.ts`
+
+Centralizes browser-only keyboard input for the single-player unlockable abilities using Microsoft's Browser Events extension. J, K, and L are independent keyboard buttons rather than remapped Player 1-4 controls, so Player 1's arrow, A, B, and M controls remain unchanged.
+
+### `ability_boost.ts`
+
+Owns the J-key Boost behavior independently from its Forest unlock encounter. Once unlocked, Boost works in every Free Roam theme, raises top speed to 1.5x for 1.8 seconds, enforces a five-second cooldown, and clamps the car back to its normal cap when the effect ends. Pressing J before unlocking it displays `Boost locked. Explore Forest` only during Free Roam.
+
+### `ability_blink.ts`
+
+Owns the K-key Blink behavior independently from its Cave unlock encounter. Once unlocked, Blink works in every Free Roam theme, moves up to five tiles along the car's facing direction, checks every intermediate collision tile, and enforces a five-second cooldown. Pressing K before unlocking it displays `Blink locked. Explore Cave` only during Free Roam.
+
+### `ability_drift.ts`
+
+Owns the L-key Drift behavior independently from its Highway unlock encounter. Once unlocked, holding Drift works in every Free Roam theme and blends extra steering into normal movement for tighter turns without adding speed or overriding braking. Pressing L before unlocking it displays `Drift locked. Explore Highway` only during Free Roam.
 
 ### `freeroam_menu.ts`
 
@@ -144,7 +179,7 @@ Current race settings are:
 
 ### `save_system.ts`
 
-Stores browser-persistent progression as a versioned number-array record and stores the player name under a separate string key so ordinary progression updates do not rewrite it. It loads and validates cash, race statistics, owned parts and paints, equipped parts, equipped colors, and player identity; it also restores clean new-game defaults when progress is reset.
+Stores browser-persistent progression as a versioned number-array record and stores the player name under a separate string key so ordinary progression updates do not rewrite it. It loads and validates cash, race statistics, owned parts and paints, equipped parts, equipped colors, player identity, the permanent Free Roam seed, carried/deposited statues, NPC victories, loop trials, and ability unlocks. Older version-1 saves without mastery fields remain compatible, and Reset Progress restores clean defaults for both garage and procedural-world state.
 
 ### `sprite_kinds.ts`
 

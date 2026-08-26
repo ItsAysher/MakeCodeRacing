@@ -81,6 +81,19 @@ function createPlayerRendering(direction: CarImageDirection) {
     playerCarVisual.z = player.z + 1
 }
 
+/** Immediately sets the stopped car's facing direction and visible image. */
+function setPlayerCarFacingDirection(direction: CarImageDirection) {
+    currentCarImageDirection = direction
+    ensurePlayerCarImageCache()
+
+    if (playerCarVisual) {
+        playerCarVisual.setImage(cachedPlayerCarImages[direction])
+        renderedCarBodyIndex = currentCarBodyIndex
+        renderedCarImageDirection = direction
+        renderedCarPaintRevision = playerPaintRevision
+    }
+}
+
 /** Destroys the visible half of the player car. */
 function destroyPlayerRendering() {
     playerCarVisual.destroy()
