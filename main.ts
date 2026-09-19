@@ -7,11 +7,11 @@ recalculatePlayerStats()
  */
 function showHowToPlay() {
     game.showLongText(
-        "DRIVING\nD-pad: throttle + steer\nA: brake / shift to reverse\nMenu: pause or map\n\nRace through checkpoints in order and protect your durability.",
+        "DRIVING\nD-pad: throttle + steer\nA: brake / shift to reverse\nMenu: pause or map\nRace through checkpoints in order and protect your durability.",
         DialogLayout.Full
     )
     game.showLongText(
-        "FREE ROAM\nB: use selected ability\nMenu: map + ability selector\n\nFind rival activities to unlock Boost, Blink, and Drift.",
+        "FREE ROAM\nB: use selected ability\nMenu: map + ability selector\nFind rival activities to unlock Boost, Blink, and Drift.",
         DialogLayout.Full
     )
     game.showLongText(
@@ -40,7 +40,7 @@ function showStartMenu() {
         } else {
             game.showLongText(
                 "MAKECODE RACING\nVersion " + racingGameVersion +
-                "\n\nProgress: " +
+                "\nProgress: " +
                 (existingGameProgressLoaded ? "Save loaded" : "New game"),
                 DialogLayout.Full
             )

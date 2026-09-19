@@ -162,7 +162,7 @@ function raceResultDescription(
                 currentRaceTimeMilliseconds()
             ) : "") +
         currentRaceRecordHighlights() +
-        "\n\nBase prize: $" + reward.base
+        "\nBase prize: $" + reward.base
     if (reward.placement > 0) {
         result += "\nPlacement: $" + reward.placement
     }
@@ -219,7 +219,7 @@ function completeCurrentRace(completedRace: boolean) {
         if (unlockedContent.length > 0) {
             game.showLongText(
                 "NEW UNLOCK\n" + unlockedContent +
-                    "\n\nAvailable from the Garage.",
+                    "\nAvailable from the Garage.",
                 DialogLayout.Full
             )
         }
