@@ -2,6 +2,9 @@
 
 Racing is a driving, time-trial, and vehicle-progression game for Microsoft MakeCode Arcade. Build a car in the Garage, race a deterministic field of named rivals across three circuits, chase medals and personal records, or explore three persistent procedural Free Roam worlds to master special abilities.
 
+The product rationale, implementation ordering, experience-impact ranking, and
+next-release backlog are recorded in [POLISH_DESIGN.md](POLISH_DESIGN.md).
+
 ## Core Gameplay Loop
 
 1. Buy, equip, and preview engine, wheel, body, brake, and paint upgrades in the Garage.
