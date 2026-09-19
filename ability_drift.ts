@@ -6,10 +6,23 @@ function driftAbilityInputAvailable() {
         player != null && !freeRoamMenuOpen
 }
 
-/** True while holding the unlocked Drift key during any Free Roam theme. */
+/** True while holding B with Drift selected during any Free Roam theme. */
 function driftAbilityIsActive() {
     return driftAbilityInputAvailable() && highwayDriftUnlocked &&
-        driftAbilityButton.isPressed()
+        selectedFreeRoamAbility == FreeRoamAbility.Drift &&
+        controller.B.isPressed()
+}
+
+function announceDriftAbilityInput() {
+    if (!driftAbilityInputAvailable()) {
+        return
+    }
+    if (!highwayDriftUnlocked) {
+        showAbilityToast("DRIFT LOCKED - EXPLORE HIGHWAY", 2)
+    } else {
+        showAbilityToast("HOLD B TO DRIFT", 7)
+    }
+    refreshAbilityHud()
 }
 
 /**
@@ -60,24 +73,6 @@ function updateDriftAbility() {
         updatePlayerCarImage()
     }
 }
-
-driftAbilityButton.onEvent(browserEvents.KeyEvent.Pressed, function () {
-    if (!driftAbilityInputAvailable()) {
-        return
-    }
-
-    if (!highwayDriftUnlocked) {
-        if (playerCarVisual) {
-            playerCarVisual.sayText(
-                "Drift locked. Explore Highway",
-                1500,
-                false
-            )
-        }
-    } else if (playerCarVisual) {
-        playerCarVisual.sayText("DRIFT", 450, false)
-    }
-})
 
 game.onUpdate(function () {
     updateDriftAbility()

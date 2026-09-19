@@ -22,13 +22,24 @@ function createPlayerHealthBar() {
     playerHealthBar = statusbars.create(44, 6, StatusBarKind.Durability)
     playerHealthBar.max = playerMaximumDurability
     playerHealthBar.value = playerRaceHealth
-    playerHealthBar.setColor(7, 2, 4)
-    playerHealthBar.setBarBorder(1, 15)
+    refreshPlayerHealthBarColors()
     playerHealthBar.setFlag(SpriteFlag.RelativeToCamera, true)
     playerHealthBar.setFlag(SpriteFlag.Ghost, true)
     playerHealthBar.z = 110
     playerHealthBar.right = 158
     playerHealthBar.top = 11
+}
+
+function refreshPlayerHealthBarColors() {
+    if (!playerHealthBar) {
+        return
+    }
+    playerHealthBar.setColor(
+        racingHighContrastHud ? 1 : 7,
+        2,
+        racingHighContrastHud ? 5 : 4
+    )
+    playerHealthBar.setBarBorder(1, 15)
 }
 
 /**
@@ -85,6 +96,11 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.AIRacer, function (playerSprite,
 
     lastPlayerRacerDamageTime = now
     damagePlayerCar(12)
+    playPlayerWallCrashSound()
+    showImpactEffect(
+        (playerSprite.x + racer.x) / 2,
+        (playerSprite.y + racer.y) / 2
+    )
 
     // Bounce the cars apart so a single crash does not pin them together.
     playerSprite.vx = playerSprite.vx * -0.35
@@ -104,6 +120,7 @@ scene.onHitWall(SpriteKind.Player, function (sprite, location) {
 
     lastPlayerWallImpactTime = now
     playPlayerWallCrashSound()
+    showImpactEffect(sprite.x, sprite.y)
 
     if (drivingSessionState == DrivingSessionState.Race) {
         damagePlayerCar(8)

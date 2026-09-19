@@ -33,6 +33,14 @@ let highwayDriftAbandonMarginTiles = freeRoamSectionSize * 2
 let highwayDriftNpcAlertDistanceTiles = 6
 let highwayDriftNpcRearmDistanceTiles = 8
 
+// Each loop mentor has a purpose-built native racer instead of sharing the
+// player's B2 body. Their challenge index remains stable across world seeds.
+let highwayDriftNpcImages: Image[] = [
+    assets.image`highway-neon-right`,
+    assets.image`highway-apex-right`,
+    assets.image`highway-goldline-right`
+]
+
 /** Returns whether one of the three permanent highway trials is complete. */
 function highwayDriftChallengeIsComplete(challengeIndex: number) {
     return (highwayDriftChallengeMask & (1 << challengeIndex)) != 0
@@ -144,7 +152,7 @@ function highwayDriftGateWorldTileY(
 }
 
 /**
- * Logical location of the placeholder racer beside a challenge's start gate.
+ * Logical location of the mentor racer beside a challenge's start gate.
  * Gate zero always crosses a horizontal road heading east, so the racer sits
  * two tiles before it on the north shoulder and faces into the course.
  */
@@ -156,10 +164,19 @@ function highwayDriftNpcWorldTileY(challengeIndex: number) {
     return highwayDriftGateWorldTileY(challengeIndex, 0) - 4
 }
 
-/** Builds a visible B2 placeholder racer for one highway challenge. */
-function highwayDriftNpcImage(challengeComplete: boolean) {
-    let npcImage = allCarBodyImages[1][CarImageDirection.Right].clone()
-    npcImage.replace(10, challengeComplete ? 7 : 8)
+/** Builds a native loop mentor, with a gold badge on completed trials. */
+function highwayDriftNpcImage(
+    challengeIndex: number,
+    challengeComplete: boolean
+) {
+    let npcImage = highwayDriftNpcImages[challengeIndex].clone()
+    if (challengeComplete) {
+        npcImage.setPixel(2, 0, 5)
+        npcImage.setPixel(1, 1, 5)
+        npcImage.setPixel(2, 1, 5)
+        npcImage.setPixel(3, 1, 5)
+        npcImage.setPixel(2, 2, 5)
+    }
     return npcImage
 }
 
@@ -268,7 +285,7 @@ function rebuildHighwayDriftGateSprites() {
                 npcWorldTileY
             )
             let npc = sprites.create(
-                highwayDriftNpcImage(challengeComplete),
+                highwayDriftNpcImage(challenge, challengeComplete),
                 SpriteKind.HighwayDriftNpc
             )
             npc.setFlag(SpriteFlag.GhostThroughWalls, true)
@@ -411,8 +428,12 @@ function completeHighwayDriftChallenge(challengeIndex: number) {
 
     let completed = highwayCompletedDriftChallengeCount()
     if (completed >= highwayDriftChallengeCount) {
-        highwayDriftUnlocked = true
-        showHighwayDriftMessage("DRIFT UNLOCKED - HOLD L", 2500)
+        if (!highwayDriftUnlocked) {
+            highwayDriftUnlocked = true
+            selectFreeRoamAbility(FreeRoamAbility.Drift)
+            showAbilityToast("DRIFT SELECTED - HOLD B", 7)
+        }
+        showHighwayDriftMessage("DRIFT UNLOCKED - HOLD B", 2500)
     } else {
         showHighwayDriftMessage(
             "DRIFT TRIAL " + completed + "/" + highwayDriftChallengeCount,

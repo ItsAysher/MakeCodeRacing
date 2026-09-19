@@ -19,10 +19,17 @@ let caveMasterySiteWorldTileY: number[] = []
 let caveMasterySiteSprites: Sprite[] = [null, null, null]
 let caveMasteryHomeSprite: Sprite = null
 let caveMasteryCarriedSprite: Sprite = null
-let caveMasteryFullPedestalImage: Image = null
+let caveMasteryFullPedestalImages: Image[] = []
 let caveMasteryEmptyPedestalImage: Image = null
 let caveMasteryHomePedestalImage: Image = null
 let caveStatueSiteCount = 3
+
+// Stable site order gives each collectible a recognizable native silhouette.
+let caveMasteryStoneCarImages: Image[] = [
+    assets.image`cave-stone-sprinter-right`,
+    assets.image`cave-stone-guardian-right`,
+    assets.image`cave-stone-crown-right`
+]
 
 /** Returns the compact three-bit set of Cave statues removed from their sites. */
 function caveMasteryCollectedMaskForSave() {
@@ -106,36 +113,31 @@ function resetCaveMasteryProgress() {
     }
 }
 
-/** Builds one cached placeholder from the existing pedestal and B2 car art. */
+/** Composes native stone racers and their matching native pedestal assets. */
 function caveMasteryBuildDisplayImages() {
-    if (caveMasteryFullPedestalImage) {
+    if (caveMasteryFullPedestalImages.length > 0) {
         return
     }
 
-    let pedestal = sprites.builtin.pedestal
-    let stoneCar = carBody2Images[CarImageDirection.Right].clone()
+    let pedestal = assets.image`cave-racer-pedestal`
+    let homeAltar = assets.image`cave-home-altar`
+    let displayWidth = pedestal.width
+    let displayHeight = pedestal.height + 9
 
-    // The B2 sprite remains recognizable while its bright race paint becomes
-    // a neutral stone palette. No additional generated image asset is needed.
-    stoneCar.replace(10, 1)
-    stoneCar.replace(12, 13)
-
-    let displayWidth = Math.max(pedestal.width, stoneCar.width)
-    let displayHeight = pedestal.height + 8
-    caveMasteryFullPedestalImage = image.create(
-        displayWidth,
-        displayHeight
-    )
-    caveMasteryFullPedestalImage.drawTransparentImage(
-        pedestal,
-        (displayWidth - pedestal.width) >> 1,
-        displayHeight - pedestal.height
-    )
-    caveMasteryFullPedestalImage.drawTransparentImage(
-        stoneCar,
-        (displayWidth - stoneCar.width) >> 1,
-        0
-    )
+    for (let stoneCar of caveMasteryStoneCarImages) {
+        let fullPedestal = image.create(displayWidth, displayHeight)
+        fullPedestal.drawTransparentImage(
+            pedestal,
+            (displayWidth - pedestal.width) >> 1,
+            displayHeight - pedestal.height
+        )
+        fullPedestal.drawTransparentImage(
+            stoneCar,
+            (displayWidth - stoneCar.width) >> 1,
+            0
+        )
+        caveMasteryFullPedestalImages.push(fullPedestal)
+    }
 
     caveMasteryEmptyPedestalImage = image.create(
         displayWidth,
@@ -147,12 +149,11 @@ function caveMasteryBuildDisplayImages() {
         displayHeight - pedestal.height
     )
 
-    let homeMarker = sprites.dungeon.collectibleInsignia
-    caveMasteryHomePedestalImage = caveMasteryEmptyPedestalImage.clone()
+    caveMasteryHomePedestalImage = image.create(displayWidth, displayHeight)
     caveMasteryHomePedestalImage.drawTransparentImage(
-        homeMarker,
-        (displayWidth - homeMarker.width) >> 1,
-        0
+        homeAltar,
+        (displayWidth - homeAltar.width) >> 1,
+        displayHeight - homeAltar.height
     )
 }
 
@@ -281,7 +282,7 @@ function caveMasteryRefreshWorldSprites() {
         caveMasterySiteSprites[siteIndex] = caveMasteryCreateWorldSprite(
             statueWasCollected ?
                 caveMasteryEmptyPedestalImage :
-                caveMasteryFullPedestalImage,
+                caveMasteryFullPedestalImages[siteIndex],
             caveMasterySiteWorldTileX[siteIndex],
             caveMasterySiteWorldTileY[siteIndex]
         )
@@ -310,11 +311,8 @@ function caveMasteryRefreshCarriedSprite() {
     }
 
     if (caveCarriedStatueIndex >= 0 && caveMasteryActive) {
-        let carriedImage = carBody2Images[CarImageDirection.Right].clone()
-        carriedImage.replace(10, 1)
-        carriedImage.replace(12, 13)
         caveMasteryCarriedSprite = sprites.create(
-            carriedImage,
+            caveMasteryStoneCarImages[caveCarriedStatueIndex].clone(),
             SpriteKind.Food
         )
         caveMasteryCarriedSprite.setFlag(SpriteFlag.Ghost, true)
@@ -388,10 +386,12 @@ function caveMasteryDepositCarriedStatue() {
     saveGameProgress()
 
     if (unlockedNow) {
+        selectFreeRoamAbility(FreeRoamAbility.Blink)
         game.showLongText(
-            "Blink unlocked! Press K in any Free Roam to teleport up to 5 tiles across open ground.",
+            "Blink unlocked and selected! Press B in Free Roam to teleport up to 5 tiles across open ground.",
             DialogLayout.Bottom
         )
+        showAbilityToast("BLINK SELECTED - B", 9)
     } else if (playerCarVisual) {
         playerCarVisual.sayText(
             "STATUES RETURNED " + caveStatuesReturned + "/3",

@@ -1,39 +1,51 @@
 # Racing
 
-Racing is a work-in-progress driving and progression game for Microsoft MakeCode Arcade, developed in Visual Studio Code. The player earns cash by winning races, spends that cash on car upgrades, and gradually builds a vehicle capable of competing against stronger opponents.
-
-The game has three race difficulties: Beginner, Intermediate, and Expert. Each level increases the lap count, time limit, opponent count, rewards, and opponent performance. It also includes Forest, Highway, and Cave Free Roam maps for driving outside of races.
+Racing is a driving, time-trial, and vehicle-progression game for Microsoft MakeCode Arcade. Build a car in the Garage, race a deterministic field of named rivals across three circuits, chase medals and personal records, or explore three persistent procedural Free Roam worlds to master special abilities.
 
 ## Core Gameplay Loop
 
-1. Visit the Garage and equip or purchase car parts.
-2. Select a race difficulty or a Free Roam map.
-3. Complete race laps before the timer expires or an AI opponent finishes.
-4. Earn cash and wins from successful races.
-5. Return to the Garage and improve the car for harder races.
+1. Buy, equip, and preview engine, wheel, body, brake, and paint upgrades in the Garage.
+2. Enter a circuit event or explore Forest, Highway, and Cave Free Roam.
+3. Race through route gates in order, manage durability, and finish before the event time limit.
+4. Earn cash from classified finishes, placement, clean driving, and remaining time.
+5. Improve the car, unlock tougher events, and return for faster medals and personal records.
 
-The car can be upgraded in four categories:
+The four mechanical upgrade categories have distinct roles:
 
-- **Engine:** contributes speed and acceleration.
-- **Wheels:** contribute speed and acceleration.
-- **Body:** determines durability and how efficiently the car uses its available speed.
-- **Brakes:** determine braking strength.
+- **Engine:** top speed and acceleration.
+- **Wheels:** acceleration and speed-sensitive steering.
+- **Body:** durability and performance efficiency.
+- **Brakes:** stopping power and the transition into reverse.
+
+Intermediate races and all Free Roam themes unlock at three wins. Expert races unlock at seven wins. Each circuit awards Bronze for a classified finish and has its own Silver and Gold time targets.
+
+## Product Features
+
+- A controller-native start menu, Garage, event briefings, records screen, settings, and in-game help.
+- A staged grid countdown, ordered checkpoint validation, wrong-way feedback, live place, lap timing, race timing, and durability HUDs.
+- Deterministic named rivals with per-driver pace, steering, cornering, recovery, collision avoidance, and true finish order.
+- Results that show finish status, place, time, fastest lap, medal, new records, and an itemized reward breakdown.
+- Persistent best race times, best laps, best finishes, medals, cash, equipment, paint, mastery progress, and discovered activity coordinates.
+- A dedicated race pause menu with Resume, Restart Race, Controls, Settings, and Return to Garage actions.
+- Infinite seed-stable Forest, Highway, and Cave worlds built around authored home areas, with a streamed map, home guidance, and discovered-activity markers.
+- Three mastery paths: defeat Forest rivals for Boost, complete Highway loops for Drift, and return Cave racer statues for Blink.
+- MakeCode-native mentor cars, stone racers, landmarks, ability icons, HUD art, driving effects, and accessibility-aware presentation.
+- Player options for sound, camera shake, high-contrast HUD colors, and driving effects. Presentation settings are stored independently from career progress.
 
 ## Controls
 
-- **Directional buttons:** Accelerate and steer in the selected direction. Opposite input slows the car before engaging reverse.
-- **A:** Brake.
-- **M:** Open or close the Free Roam menu while using the browser simulator.
-- **B:** Return from the generated-map screen or close the Free Roam menu. It intentionally has no effect during normal driving or races.
-- **J:** Use Boost in any Free Roam after defeating all three forest challengers.
-- **K:** Use Blink in any Free Roam after returning all three stone racer statues.
-- **L:** Hold Drift in any Free Roam after completing all three highway loop trials.
+- **D-pad / directional buttons:** Throttle and steer. Opposite input decelerates before engaging reverse.
+- **A:** Brake. In menus, confirm the highlighted action.
+- **B:** Use the selected Free Roam ability. Hold while steering when Drift is selected. In menus, go back or close the current screen.
+- **Menu:** Open the Free Roam map/ability menu or pause an active race.
+
+The Free Roam menu cycles the selected unlocked ability and remembers that selection. Locked abilities remain visible as mastery goals; the ability HUD communicates the selection, lock state, active duration, and cooldown.
 
 ## Game Files
 
 ### `ai_racers.ts`
 
-Owns the AI race subsystem. It consumes the active race definition, creates and removes opponents, applies randomized paint, steers racers through the cached track route, switches their directional images, and tracks valid lap progress.
+Owns the AI race subsystem. It creates a deterministic named field from the active event, applies paint and driver profiles, steers through the cached route, avoids nearby cars, recovers from stalls, switches directional images, validates ordered lap progress, and records each rival's true finishing place.
 
 ### `car_assets.ts`
 
@@ -69,7 +81,7 @@ Owns all Forest river topology and rendering. Each 64x64 logical world region ha
 
 ### `freeroam_forest_mastery.ts`
 
-Places three seed-stable B2 forest challengers on generated trails. Each NPC opens a different native MakeCode track with its own start positions, finish gate, and authored waypoint route. Their AI uses the standard velocity-seeking racer steering at 84%, 89%, and 94% of the player's unboosted top speed, keeping the challenges beatable while scaling with upgrades. Three unique victories permanently unlock Boost.
+Places three seed-stable forest challengers on generated trails. Bramble, Ember, and Phantom each use unique four-direction native car art and open a different MakeCode-native course with authored starts, finish gate, and waypoint route. Their AI scales against the player's unboosted car while remaining beatable. Three unique victories permanently unlock and select Boost.
 
 ### `freeroam_highway_generation.ts`
 
@@ -77,7 +89,7 @@ Owns infinite Highway Free Roam generation. It preserves the authored home map, 
 
 ### `freeroam_highway_mastery.ts`
 
-Uses the same three guaranteed home-area loops as drift trials. Each starting gate has a streamed, right-facing B2 placeholder racer on its shoulder; approaching an unfinished trial once per visit opens a `showLongText` explanation, and leaving the area rearms the dialogue. Eight streamed, orientation-aware cone gates span all six lanes and lead the player clockwise around each loop at a progressively higher minimum speed. A trial cancels if the player returns through its start too soon or leaves the loop area, so another trial can always begin. Completed gates and their NPC marker remain green when revisited. Clearing all three trials permanently unlocks Drift.
+Uses the three guaranteed home-area loops as drift trials. Neon, Apex, and Goldline wait beside their respective gates in unique native car art. Eight streamed, orientation-aware cone gates lead the player clockwise around each loop at progressively higher minimum speeds. A trial cancels after an invalid early return or leaving the course; completed gates and mentor markers remain visibly complete. Clearing all three trials permanently unlocks and selects Drift.
 
 ### `freeroam_cave_generation.ts`
 
@@ -87,27 +99,39 @@ Cave rubble, moss, and solid crystals are selected deterministically so they rem
 
 ### `freeroam_cave_mastery.ts`
 
-Places three stone B2 racer statues on placeholder pedestals at distant seed-stable cave sites. The player carries one at a time back to the home altar; collected sites retain empty pedestals after unloading, revisiting, or restarting the game. Returning all three permanently unlocks Blink.
+Places three distinct stone racer statues on native pedestals at distant seed-stable cave sites. The player carries one at a time back to the home altar; collected sites retain empty pedestals after unloading, revisiting, or restarting the game. Returning all three permanently unlocks and selects Blink.
 
 ### `ability_input.ts`
 
-Centralizes browser-only keyboard input for the single-player unlockable abilities using Microsoft's Browser Events extension. J, K, and L are independent keyboard buttons rather than remapped Player 1-4 controls, so Player 1's arrow, A, B, and M controls remain unchanged.
+Centralizes the selected Free Roam ability and its persistent controller-B input for both the simulator and physical Arcade hardware.
 
 ### `ability_boost.ts`
 
-Owns the J-key Boost behavior independently from its Forest unlock encounter. Once unlocked, Boost works in every Free Roam theme, raises top speed to 1.5x for 1.8 seconds, enforces a five-second cooldown, and clamps the car back to its normal cap when the effect ends. Pressing J before unlocking it displays `Boost locked. Explore Forest` only during Free Roam.
+Owns Boost independently from its Forest unlock encounter. Once unlocked and selected, B activates it in every Free Roam theme, raises top speed to 1.5x for 1.8 seconds, enforces a five-second cooldown, and clamps the car back to its normal cap when the effect ends.
 
 ### `ability_blink.ts`
 
-Owns the K-key Blink behavior independently from its Cave unlock encounter. Once unlocked, Blink works in every Free Roam theme, moves up to five tiles along the car's facing direction, checks every intermediate collision tile, and enforces a five-second cooldown. Pressing K before unlocking it displays `Blink locked. Explore Cave` only during Free Roam.
+Owns Blink independently from its Cave unlock encounter. Once unlocked and selected, B moves the car up to five tiles along its facing direction, checks every intermediate collision tile, and enforces a five-second cooldown in every Free Roam theme.
 
 ### `ability_drift.ts`
 
-Owns the L-key Drift behavior independently from its Highway unlock encounter. Once unlocked, holding Drift works in every Free Roam theme and blends extra steering into normal movement for tighter turns without adding speed or overriding braking. Pressing L before unlocking it displays `Drift locked. Explore Highway` only during Free Roam.
+Owns hold-to-use Drift independently from its Highway unlock encounter. Once unlocked, holding B while Drift is selected blends extra steering into normal movement for tighter turns without adding speed or overriding braking.
+
+### `ability_hud.ts`
+
+Displays the selected ability with native icons, its locked or ready state, and time-based active/cooldown feedback while keeping allocations bounded.
+
+### `driving_effects.ts`
+
+Creates lightweight skid, dust, and speed feedback from reusable Arcade sprites. The system respects the Driving FX setting and clears its effects during transitions.
 
 ### `freeroam_menu.ts`
 
-Remaps the simulator Menu input to the keyboard's M key and replaces it with a Free Roam-only pause menu containing Display Map and Exit Freeroam. Display Map renders the complete currently generated 24x24 tile window at a near-full-screen scale, marks the player, and draws an arrow toward the definitive home chunk. Discovered activities inside the window receive numbered theme-colored markers—green Forest NPCs, yellow Highway drift NPCs, or purple Cave statues—while discovered targets outside the window receive numbered direction arrows around the player. The standard Arcade system menu remains available outside Free Roam.
+Owns both controller-native driving menus. In Free Roam it offers Display Map, ability selection, and Exit Free Roam; the map renders the streamed 24x24 window, player, home guidance, coordinates, and numbered discovered activities. During grid or live race states it opens a dedicated pause scene with Resume, Restart Race, Controls, Settings, and Return to Garage, including confirmation for destructive choices and a fresh countdown when resuming a paused grid.
+
+### `game_settings.ts`
+
+Defines the product version and persistent presentation options for sound, camera shake, high-contrast HUD colors, driving effects, and selected ability. Settings use a separate versioned record so toggles never rewrite career progress.
 
 ### `game_flow.ts`
 
@@ -115,7 +139,7 @@ Defines the selected driving mode and the single authoritative driving-session s
 
 ### `garage.ts`
 
-Owns the main Garage navigation. It routes to Parts, Paint, Player Stats, and driving-mode selection. Player Stats displays cash, wins, and races raced.
+Owns the main Garage navigation. It routes to Race, Parts, Paint, Vehicle Stats, Career, Records, Settings, and Reset Progress while surfacing the next progression milestone.
 
 ### `garage_core.ts`
 
@@ -123,7 +147,7 @@ Contains shared Garage state, background selection, extended and paginated menu 
 
 ### `garage_mode_selection.ts`
 
-Handles Beginner, Intermediate, Expert, and Free Roam selection. It enforces win requirements and stores the selected race difficulty, Free Roam theme, and driving mode.
+Handles Beginner, Intermediate, Expert, and Free Roam selection. Circuit labels expose earned medals, and a confirmation briefing shows laps, rivals, prize, time limit, personal bests, and medal targets before launch. The menu also enforces the three- and seven-win milestones.
 
 ### `garage_paint.ts`
 
@@ -135,7 +159,7 @@ Implements part labels, purchasing, equipping, shared category-selection logic, 
 
 ### `main.ts`
 
-Loads saved progress, welcomes returning players by name or prompts new players to choose one, calculates the initial vehicle statistics, runs the start menu, opens the first Garage visit, and launches the first selected driving mode.
+Loads settings and career progress, protects incompatible saves, welcomes or names the player, calculates initial vehicle statistics, and runs the Start, How to Play, Settings, and About menu before entering the Garage.
 
 ### `minimap.ts`
 
@@ -163,11 +187,19 @@ Contains the vehicle-part catalog and persistent loadout state for the current s
 
 ### `progression.ts`
 
-Owns cash, wins, races raced, and race-result bookkeeping for the current session.
+Owns cash, wins, races raced, reward application, and milestone notifications for Intermediate/Free Roam at three wins and Expert at seven.
 
 ### `race.ts`
 
-Owns race startup, player lap progress, race-only cleanup, and result presentation. It changes the session state before showing results so simultaneous finish, timeout, and wreck events cannot record a race more than once.
+Owns the race state flow from intro and grid through countdown, running, finish, and results. It coordinates ordered player laps, AI finish order, timeout/wreck classification, pause-safe cleanup, record callouts, itemized rewards, rematch, and Garage return. It locks the result state before presentation so simultaneous finish, timeout, and wreck events cannot record a race twice.
+
+### `race_progress.ts`
+
+Provides the pause-aware delta clock, route-segment cache, ordered checkpoint gates, wrong-way detection, live placement, lap/race records, medal targets, finish classification, and reward calculation.
+
+### `race_hud.ts`
+
+Reuses a fixed image-backed HUD for lap, place, elapsed time, last lap, banners, and wrong-way warnings, with standard and high-contrast palettes.
 
 ### `race_definitions.ts`
 
@@ -175,15 +207,15 @@ Stores the complete authored configuration for each difficulty: map, name, playe
 
 Current race settings are:
 
-| Difficulty | Laps | Prize | Time limit | Opponents |
-| --- | ---: | ---: | ---: | ---: |
-| Beginner | 1 | $100 | 40 seconds | 2 |
-| Intermediate | 2 | $500 | 55 seconds | 3 |
-| Expert | 3 | $1300 | 120 seconds | 4 |
+| Difficulty | Laps | Prize | Time limit | Gold | Silver | Opponents |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Beginner | 1 | $100 | 45 seconds | 26 seconds | 33 seconds | 2 |
+| Intermediate | 2 | $500 | 100 seconds | 65 seconds | 80 seconds | 3 |
+| Expert | 3 | $1300 | 210 seconds | 150 seconds | 180 seconds | 4 |
 
 ### `save_system.ts`
 
-Stores browser-persistent progression as a versioned number-array record and stores the player name under a separate string key so ordinary progression updates do not rewrite it. It loads and validates cash, race statistics, owned parts and paints, equipped parts, equipped colors, player identity, the permanent Free Roam seed, carried/deposited statues, NPC victories, loop trials, ability unlocks, and activity-map discovery coordinates. Older version-1 saves without mastery or map-discovery fields remain compatible, and Reset Progress restores clean defaults for both garage and procedural-world state.
+Stores browser-persistent progression as a versioned number-array record and keeps the player name separate so routine updates do not rewrite it. Version 2 includes career totals, records, equipment, paint, deterministic world state, mastery, ability unlocks, and activity-map discoveries. Version-1 careers migrate forward with safe defaults. Unknown, newer, or incomplete saves are placed in read-only protection instead of being overwritten; Reset Progress explicitly restores writable clean defaults.
 
 ### `sprite_kinds.ts`
 
@@ -200,3 +232,35 @@ The project uses the following MakeCode Arcade extensions:
 - Arcade Storytelling for menus and cutscenes.
 - Arcade Minimap for the race minimap.
 - Status Bar for the durability HUD.
+
+The project deliberately uses native `image.print`, controller input, sprite HUDs, and a delta-time race clock instead of adding menu, font, timer, animation, settings, or sprite-data extensions. This keeps memory use and hardware behavior predictable.
+
+The full game exceeds the flash budget of lower-capacity nRF52833 and SAMD51 boards. `mkc.json` therefore defaults native CLI builds to RP2040; the nRF52840 (`n4`) variant also builds successfully. The browser simulator and JavaScript build remain unrestricted.
+
+## Native Asset Workflow
+
+`images.g.jres` is the source of truth for project images. `images.g.ts` is generated code and must never be assembled or edited by hand.
+
+To add or revise the polish asset set:
+
+1. Update the pixel-art construction in `tools/generate_polish_assets.mjs`.
+2. Run `node tools/generate_polish_assets.mjs`. The generator preserves unrelated assets and stable IDs while writing MakeCode F4 image records.
+3. In the VS Code MakeCode Arcade panel, click **Start MakeCode Simulator**. This active MakeCode build normally regenerates `images.g.ts` from the JRES catalog.
+4. If the extension does not refresh the generated binding file, reload VS Code with **Developer: Reload Window**, then click **Start MakeCode Simulator** again.
+5. For a headless or still-stale workspace, run `node tools/regenerate_image_bindings.mjs`. This fallback delegates the entire file to MakeCode's cached `pxt.emitProjectImages` emitter; it does not hand-author bindings. A MakeCode build must have populated `.pxt/mkc-cache` first.
+
+The F4 payload is Arcade's native column-major format. Every column packs two vertical 4-bit pixels per byte and is aligned to a four-byte stride. Use the generator and validator rather than manipulating its base64 payload directly.
+
+## Validation
+
+Run these checks from the project root after code or asset changes:
+
+```powershell
+node tools/validate_assets.mjs
+node tools/regenerate_image_bindings.mjs --check
+node tools/compile_makecode.mjs
+# Cached official CLI; defaults to RP2040 through mkc.json
+makecode build --native --always-built
+```
+
+The asset validator is read-only. It verifies JSON structure, unique IDs and display names, canonical base64, F4 headers, dimensions and aligned payload lengths, then decodes every image and compares it pixel-for-pixel with both aliases in the MakeCode-generated `images.g.ts` factory. The binding check independently proves the generated file exactly matches MakeCode's current emitter output. The final command type-checks and compiles the complete project through the locally cached MakeCode toolchain.

@@ -2,11 +2,72 @@
 
 /** Displays persistent player progression. */
 function showPlayerStats() {
+    let winRate = racesRaced > 0 ?
+        Math.idiv(wins * 100, racesRaced) : 0
     game.showLongText(
         "Cash: $" + cash +
         "\nWins: " + wins +
-        "\nTotal Races: " + racesRaced,
+        "\nTotal Races: " + racesRaced +
+        "\nWin Rate: " + winRate + "%" +
+        "\nVersion: " + racingGameVersion,
         DialogLayout.Bottom
+    )
+}
+
+function countOwnedItems(values: boolean[]) {
+    let owned = 0
+    for (let value of values) {
+        if (value) {
+            owned += 1
+        }
+    }
+    return owned
+}
+
+function showCareerProgress() {
+    let ownedParts = countOwnedItems(engineUnlocked) +
+        countOwnedItems(wheelsUnlocked) +
+        countOwnedItems(bodyUnlocked) +
+        countOwnedItems(brakesUnlocked)
+    let ownedPaints = countOwnedItems(paintColorsUnlocked)
+    let forestCompleted = forestMasteryCountCompletedRaces(
+        forestMasteryCompletedRaceMask
+    )
+    let highwayCompleted = highwayCompletedDriftChallengeCount()
+    let caveCompleted = caveMasteryReturnedCountForSave()
+    let abilities = (forestBoostUnlocked ? 1 : 0) +
+        (highwayDriftUnlocked ? 1 : 0) +
+        (caveTeleportUnlocked ? 1 : 0)
+    let records = 0
+    for (let index = 0; index < 3; index++) {
+        if (bestRaceTimeMilliseconds[index] > 0) {
+            records += 1
+        }
+    }
+    let completedPoints = ownedParts + ownedPaints +
+        forestCompleted + highwayCompleted + caveCompleted +
+        abilities + records
+    let maximumPoints = 12 + 15 + 9 + 3 + 3
+    let completionPercent = Math.idiv(
+        completedPoints * 100,
+        maximumPoints
+    )
+
+    let nextUnlock = wins < 3 ?
+        (3 - wins) + " win(s) to Intermediate + Free Roam" :
+        (wins < 7 ? (7 - wins) + " win(s) to Expert" :
+            "All driving modes unlocked")
+    game.showLongText(
+        "CAREER " + completionPercent + "%" +
+        "\n" + nextUnlock +
+        "\n\nParts: " + ownedParts + "/12" +
+        "\nPaints: " + ownedPaints + "/15" +
+        "\nRace records: " + records + "/3" +
+        "\n\nForest rivals: " + forestCompleted + "/3" +
+        "\nHighway trials: " + highwayCompleted + "/3" +
+        "\nCave statues: " + caveCompleted + "/3" +
+        "\nAbilities: " + abilities + "/3",
+        DialogLayout.Full
     )
 }
 
@@ -27,9 +88,19 @@ function showPlayerStatsMenu() {
 
     while (!leaveStatsMenu && garageIsOpen) {
         setGarageBackground(GarageBackground.Main)
-        story.showPlayerChoices("Show Stats", "Reset Progress", "Back")
+        story.showPlayerChoices(
+            "Career Progress",
+            "Race Records",
+            "Lifetime Stats",
+            "Reset Progress",
+            "Back"
+        )
 
-        if (story.checkLastAnswer("Show Stats")) {
+        if (story.checkLastAnswer("Career Progress")) {
+            showCareerProgress()
+        } else if (story.checkLastAnswer("Race Records")) {
+            showRaceRecords()
+        } else if (story.checkLastAnswer("Lifetime Stats")) {
             showPlayerStats()
         } else if (story.checkLastAnswer("Reset Progress")) {
             confirmResetProgress()
@@ -49,7 +120,8 @@ function showGarage() {
             "Parts",
             "Paint",
             "Player Stats",
-            "Start Race"
+            "Settings",
+            "Drive"
         )
 
         if (story.checkLastAnswer("Parts")) {
@@ -58,6 +130,8 @@ function showGarage() {
             showPaintMenu()
         } else if (story.checkLastAnswer("Player Stats")) {
             showPlayerStatsMenu()
+        } else if (story.checkLastAnswer("Settings")) {
+            showRacingSettingsMenu()
         } else {
             chooseDrivingMode()
         }

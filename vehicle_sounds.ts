@@ -24,6 +24,9 @@ function resetPlayerVehicleSoundTimers() {
  * The cooldown is longer than the sound, preventing overlapping engine pulses.
  */
 function playPlayerAccelerationSound() {
+    if (!racingSoundsAreEnabled()) {
+        return
+    }
     let now = control.millis()
 
     if (now < nextPlayerDrivingSoundTime) {
@@ -40,6 +43,9 @@ function playPlayerAccelerationSound() {
  * @param currentSpeed Current magnitude of the player's velocity.
  */
 function playPlayerTurningSound(turnSeverity: number, currentSpeed: number) {
+    if (!racingSoundsAreEnabled()) {
+        return
+    }
     let now = control.millis()
 
     if (
@@ -58,6 +64,9 @@ function playPlayerTurningSound(turnSeverity: number, currentSpeed: number) {
  * Plays the impact sound used when the player hits a solid wall tile.
  */
 function playPlayerWallCrashSound() {
+    if (!racingSoundsAreEnabled()) {
+        return
+    }
     nextPlayerDrivingSoundTime = control.millis() + 250
     music.play(playerWallCrashSound, music.PlaybackMode.InBackground)
 }

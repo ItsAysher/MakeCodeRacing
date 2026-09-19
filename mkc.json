@@ -1,3 +1,4 @@
 {
-    "targetWebsite": "https://arcade.makecode.com/"
+    "targetWebsite": "https://arcade.makecode.com/",
+    "hwVariant": "rp2040"
 }

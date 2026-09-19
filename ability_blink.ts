@@ -15,6 +15,14 @@ function resetBlinkAbility() {
     blinkAbilityReadyAt = 0
 }
 
+function blinkAbilityCooldownRemaining() {
+    return Math.max(0, blinkAbilityReadyAt - game.runtime())
+}
+
+function blinkAbilityIsReady() {
+    return caveTeleportUnlocked && blinkAbilityCooldownRemaining() <= 0
+}
+
 /** Teleports cardinally without crossing walls or the streamed map boundary. */
 function useBlinkAbility() {
     if (!blinkAbilityInputAvailable() || !caveTeleportUnlocked ||
@@ -73,26 +81,26 @@ function useBlinkAbility() {
 
     blinkAbilityReadyAt = game.runtime() +
         blinkAbilityCooldownMilliseconds
-    scene.cameraShake(2, 120)
+    shakeRacingCamera(2, 120)
+    showBlinkAfterimages(
+        startTileX * freeRoamTileSize + freeRoamTileSize / 2,
+        startTileY * freeRoamTileSize + freeRoamTileSize / 2,
+        destinationX,
+        destinationY
+    )
 }
 
-blinkAbilityButton.onEvent(
-    browserEvents.KeyEvent.Pressed,
-    function () {
-        if (!blinkAbilityInputAvailable()) {
-            return
-        }
-
-        if (!caveTeleportUnlocked) {
-            if (playerCarVisual) {
-                playerCarVisual.sayText(
-                    "Blink locked. Explore Cave",
-                    1500,
-                    false
-                )
-            }
-        } else {
-            useBlinkAbility()
-        }
+function tryUseBlinkAbility() {
+    if (!blinkAbilityInputAvailable()) {
+        return
     }
-)
+
+    if (!caveTeleportUnlocked) {
+        showAbilityToast("BLINK LOCKED - EXPLORE CAVE", 2)
+    } else if (blinkAbilityCooldownRemaining() > 0) {
+        showAbilityToast("BLINK RECHARGING", 5)
+    } else {
+        useBlinkAbility()
+    }
+    refreshAbilityHud()
+}

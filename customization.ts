@@ -6,7 +6,7 @@ enum CarPaintPart {
     Accent
 }
 
-let paintPrice = 300
+let paintPrice = 150
 let paintColorNames = [
     "White",
     "Red",

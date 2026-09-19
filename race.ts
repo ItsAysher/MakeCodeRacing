@@ -3,15 +3,94 @@
 let activeRaceDefinition: RaceDefinition = null
 let checkpointArmed = false
 let raceLap = 0
+let raceFinishedCompetitorCount = 0
+let raceSessionId = 0
+let raceCountdownSprite: Sprite = null
+
+function setRaceCountdownDisplay(text: string, color: number) {
+    if (raceCountdownSprite) {
+        raceCountdownSprite.destroy()
+    }
+    let countdownImage = image.create(54, 30)
+    countdownImage.fill(15)
+    countdownImage.drawRect(0, 0, 54, 30, color)
+    countdownImage.print(
+        text,
+        (54 - text.length * image.font12.charWidth) >> 1,
+        8,
+        color,
+        image.font12
+    )
+    raceCountdownSprite = sprites.create(
+        countdownImage,
+        SpriteKind.RaceHud
+    )
+    raceCountdownSprite.setFlag(SpriteFlag.RelativeToCamera, true)
+    raceCountdownSprite.setFlag(SpriteFlag.Ghost, true)
+    raceCountdownSprite.z = 130
+    raceCountdownSprite.setPosition(80, 60)
+}
+
+function clearRaceCountdownDisplay() {
+    if (raceCountdownSprite) {
+        raceCountdownSprite.destroy()
+        raceCountdownSprite = null
+    }
+}
+
+/** Runs a cancellable grid sequence and releases every racer on GO. */
+function runRaceStartCountdown(sessionId: number) {
+    control.runInParallel(function () {
+        let labels = ["3", "2", "1"]
+        let tones = [262, 330, 392]
+        for (let index = 0; index < labels.length; index++) {
+            if (raceSessionId != sessionId ||
+                drivingSessionState != DrivingSessionState.RaceStarting) {
+                clearRaceCountdownDisplay()
+                return
+            }
+            setRaceCountdownDisplay(labels[index], 5)
+            if (racingSoundsAreEnabled()) {
+                music.playTone(tones[index], 100)
+            }
+            pause(550)
+        }
+
+        if (raceSessionId != sessionId ||
+            drivingSessionState != DrivingSessionState.RaceStarting) {
+            clearRaceCountdownDisplay()
+            return
+        }
+
+        drivingSessionState = DrivingSessionState.Race
+        startCurrentRaceTiming()
+        resumeAIRaceSystems()
+        createRaceHud()
+        updateRaceMinimap()
+        setRaceCountdownDisplay("GO!", 7)
+        if (racingSoundsAreEnabled()) {
+            music.playTone(523, 180)
+        }
+        shakeRacingCamera(1, 100)
+        pause(450)
+        if (raceSessionId == sessionId) {
+            clearRaceCountdownDisplay()
+        }
+    })
+}
 
 /** Initializes the selected race map, player systems, opponents, HUD, and timer. */
 function startNextRace() {
+    raceSessionId += 1
+    let startingSessionId = raceSessionId
     activeRaceDefinition = raceDefinitionForDifficulty(selectedRace)
-    drivingSessionState = DrivingSessionState.Race
+    drivingSessionState = DrivingSessionState.RaceStarting
     checkpointArmed = false
     raceLap = 0
+    raceFinishedCompetitorCount = 0
 
     tiles.setCurrentTilemap(activeRaceDefinition.map)
+    prepareRaceRouteProgress()
     resetRaceMinimapCache()
     scene.setBackgroundColor(7)
 
@@ -26,23 +105,82 @@ function startNextRace() {
     startPlayerMovement()
     startPlayerRaceHealth()
     startAIRaceSystems()
+    pauseAIRaceSystems()
     scene.cameraFollowSprite(player)
 
-    info.setScore(0)
-    info.showScore(true)
-    updateRaceMinimap()
+    info.showScore(false)
+    info.showCountdown(false)
     game.splash(
         activeRaceDefinition.name + " RACE",
-        "Finish the race before your opponents!"
+        activeRaceDefinition.lapTarget + " LAP" +
+            (activeRaceDefinition.lapTarget == 1 ? "" : "S") +
+            " | Prize $" + activeRaceDefinition.prize
     )
-    info.startCountdown(activeRaceDefinition.timeLimit)
+    runRaceStartCountdown(startingSessionId)
+}
+
+/** Locks in one AI finishing place while allowing the rest of the field to continue. */
+function recordAIRacerFinish(racer: Sprite) {
+    if (drivingSessionState != DrivingSessionState.Race ||
+        racer.data.finished) {
+        return
+    }
+    raceFinishedCompetitorCount += 1
+    racer.data.finished = true
+    racer.data.finishPlace = raceFinishedCompetitorCount
+    racer.data.checkpointArmed = false
+    racer.vx = 0
+    racer.vy = 0
+    racer.setFlag(SpriteFlag.Ghost, true)
+    racer.sayText(
+        raceOrdinal(racer.data.finishPlace) + " " + racer.data.racerName,
+        1200,
+        false
+    )
+}
+
+function raceResultDescription(
+    completedRace: boolean,
+    carWrecked: boolean,
+    timedOut: boolean,
+    position: number,
+    reward: RaceRewardSummary
+) {
+    let title = completedRace ?
+        raceOrdinal(position) + " PLACE" :
+        (carWrecked ? "CAR WRECKED" :
+            (timedOut ? "TIME UP" : "RACE ENDED"))
+    let result = title +
+        "\nTime: " + formatRaceTime(currentRaceTimeMilliseconds()) +
+        "\nFastest lap: " +
+        raceRecordValue(currentRaceFastestLapMilliseconds) +
+        "\nDurability: " + Math.max(0, Math.floor(playerRaceHealth)) +
+        "/" + playerMaximumDurability +
+        (completedRace ?
+            "\nMedal: " + raceMedalForTime(
+                selectedRaceIndex(),
+                currentRaceTimeMilliseconds()
+            ) : "") +
+        currentRaceRecordHighlights() +
+        "\n\nBase prize: $" + reward.base
+    if (reward.placement > 0) {
+        result += "\nPlacement: $" + reward.placement
+    }
+    if (reward.clean > 0) {
+        result += "\nClean-race bonus: $" + reward.clean
+    }
+    if (reward.time > 0) {
+        result += "\nTime bonus: $" + reward.time
+    }
+    result += "\nTOTAL: $" + reward.total
+    return result
 }
 
 /**
  * Accepts the first race result, shows it, records progression, and opens the Garage.
  * @param won Whether the player completed the required laps before an opponent.
  */
-function completeCurrentRace(won: boolean) {
+function completeCurrentRace(completedRace: boolean) {
     if (drivingSessionState != DrivingSessionState.Race) {
         return
     }
@@ -51,39 +189,64 @@ function completeCurrentRace(won: boolean) {
     // timeout, and wreck events cannot record the same race more than once.
     drivingSessionState = DrivingSessionState.RaceFinishing
 
-    let timedOut = info.countdown() <= 0
+    let timedOut = currentRaceRemainingMilliseconds() <= 0
     let carWrecked = isPlayerCarWrecked()
-    let prizeMoney = won ? activeRaceDefinition.prize : 0
+    let position = completedRace ?
+        raceFinishedCompetitorCount + 1 : racePositionForPlayer()
+    let won = completedRace && position == 1
+    stopCurrentRaceTiming(position, completedRace)
+    let reward = calculateCurrentRaceReward(
+        won,
+        completedRace && !won,
+        position
+    )
     player.vx = 0
     player.vy = 0
     pauseAIRaceSystems()
-    info.stopCountdown()
 
     story.startCutscene(function () {
-        if (won) {
-            game.splash("YOU WIN!", "Prize: $" + prizeMoney)
-        } else if (carWrecked) {
-            game.splash("CAR WRECKED", "Upgrade durability or avoid crashes.")
-        } else if (timedOut) {
-            game.splash("TIME UP", "Return to the garage and try again.")
-        } else {
-            game.splash("RACE LOST", "An opponent finished first.")
+        let unlockedContent = recordRaceResult(won, reward.total)
+        game.showLongText(
+            raceResultDescription(
+                completedRace,
+                carWrecked,
+                timedOut,
+                position,
+                reward
+            ),
+            DialogLayout.Full
+        )
+        if (unlockedContent.length > 0) {
+            game.showLongText(
+                "NEW UNLOCK\n" + unlockedContent +
+                    "\n\nAvailable from the Garage.",
+                DialogLayout.Full
+            )
         }
-
+        story.showPlayerChoices("Rematch", "Garage")
+        let rematch = story.checkLastAnswer("Rematch")
         leaveCurrentDrivingSession()
-        recordRaceResult(won, prizeMoney)
-        openGarage(startSelectedDrivingMode)
+        if (rematch) {
+            startNextRace()
+        } else {
+            showGarage()
+            startSelectedDrivingMode()
+        }
     })
 }
 
 /** Stops race-only systems and clears current race progress. */
 function stopCurrentRace() {
+    raceSessionId += 1
+    currentRaceTimingActive = false
     stopAIRaceSystems()
     stopPlayerRaceHealth()
-    info.stopCountdown()
     info.setScore(0)
     info.showScore(false)
+    info.showCountdown(false)
     hideRaceMinimap()
+    destroyRaceHud()
+    clearRaceCountdownDisplay()
     checkpointArmed = false
     raceLap = 0
     activeRaceDefinition = null
@@ -101,25 +264,25 @@ scene.onOverlapTile(SpriteKind.Player, assets.tile`raceFinishTile`, function (sp
     if (drivingSessionState != DrivingSessionState.Race || !checkpointArmed) {
         return
     }
+    if (!playerRaceRouteIsCompleteForLap()) {
+        showInvalidRaceFinishWarning()
+        return
+    }
 
     checkpointArmed = false
     raceLap += 1
-    info.setScore(raceLap)
+    recordCurrentRaceLapTime()
+    refreshRaceHud()
 
     if (raceLap >= activeRaceDefinition.lapTarget) {
         completeCurrentRace(true)
     } else {
-        sprite.sayText(
-            "Lap " + (raceLap + 1) + "/" + activeRaceDefinition.lapTarget,
-            1000,
-            false
+        showRaceBanner(
+            raceLap + 1 == activeRaceDefinition.lapTarget ?
+                "FINAL LAP" :
+                "LAP " + (raceLap + 1) + "/" +
+                    activeRaceDefinition.lapTarget,
+            raceLap + 1 == activeRaceDefinition.lapTarget ? 5 : 7
         )
-    }
-})
-
-// Treats an expired countdown as a race loss.
-info.onCountdownEnd(function () {
-    if (drivingSessionState == DrivingSessionState.Race) {
-        completeCurrentRace(false)
     }
 })

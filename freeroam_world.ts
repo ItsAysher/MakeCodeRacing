@@ -74,9 +74,10 @@ function startFreeRoam() {
     initializeFreeRoamCoordinates()
     startPlayerMovement()
     scene.cameraFollowSprite(player)
+    createAbilityHud()
 
     game.splash(
         freeRoamThemeName() + " FREE ROAM",
-        "M Menu | J Boost | K Blink | L Drift"
+        "B Ability | MENU Map"
     )
 }

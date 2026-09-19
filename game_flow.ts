@@ -7,6 +7,7 @@ enum DrivingMode {
 
 enum DrivingSessionState {
     None,
+    RaceStarting,
     Race,
     RaceFinishing,
     FreeRoam
@@ -30,10 +31,12 @@ function leaveCurrentDrivingSession() {
         return
     }
 
-    if (drivingSessionState == DrivingSessionState.Race ||
+    if (drivingSessionState == DrivingSessionState.RaceStarting ||
+        drivingSessionState == DrivingSessionState.Race ||
         drivingSessionState == DrivingSessionState.RaceFinishing) {
         stopCurrentRace()
     } else if (drivingSessionState == DrivingSessionState.FreeRoam) {
+        destroyAbilityHud()
         stopSelectedFreeRoamGeneration()
     }
 

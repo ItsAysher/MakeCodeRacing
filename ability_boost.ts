@@ -46,6 +46,32 @@ function useBoostAbility() {
     }
 }
 
+function boostAbilityCooldownRemaining() {
+    return Math.max(0, boostAbilityReadyAt - game.runtime())
+}
+
+function boostAbilityIsReady() {
+    return forestBoostUnlocked && !boostAbilityActive &&
+        boostAbilityCooldownRemaining() <= 0
+}
+
+function tryUseBoostAbility() {
+    if (!boostAbilityInputAvailable()) {
+        return
+    }
+
+    if (!forestBoostUnlocked) {
+        showAbilityToast("BOOST LOCKED - EXPLORE FOREST", 2)
+    } else if (boostAbilityCooldownRemaining() > 0) {
+        showAbilityToast("BOOST RECHARGING", 5)
+    } else {
+        useBoostAbility()
+        showAbilityToast("BOOST!", 7)
+        showBoostTrail()
+    }
+    refreshAbilityHud()
+}
+
 /** Restores the ordinary speed cap and removes any excess boosted velocity. */
 function endBoostAbility() {
     if (!boostAbilityActive) {
@@ -71,37 +97,12 @@ function resetBoostAbility() {
     boostAbilityReadyAt = 0
 }
 
-boostAbilityButton.onEvent(
-    browserEvents.KeyEvent.Pressed,
-    function () {
-        if (!boostAbilityInputAvailable()) {
-            return
-        }
-
-        if (!forestBoostUnlocked) {
-            if (playerCarVisual) {
-                playerCarVisual.sayText(
-                    "Boost locked. Explore Forest",
-                    1500,
-                    false
-                )
-            }
-        } else if (!boostAbilityActive &&
-            game.runtime() < boostAbilityReadyAt) {
-            if (playerCarVisual) {
-                playerCarVisual.sayText("BOOST RECHARGING", 700, false)
-            }
-        } else {
-            useBoostAbility()
-        }
-    }
-)
-
 game.onUpdate(function () {
     if (boostAbilityActive &&
         (game.runtime() >= boostAbilityEndsAt ||
             drivingSessionState != DrivingSessionState.FreeRoam ||
             freeRoamMenuOpen || !player)) {
         endBoostAbility()
+        refreshAbilityHud()
     }
 })

@@ -3,7 +3,6 @@
     "description": "",
     "dependencies": {
         "device": "*",
-        "browser-events": "*",
         "arcade-storytelling": "github:microsoft/arcade-storytelling#v1.0.3",
         "arcade-minimap": "github:microsoft/arcade-minimap#v0.6.1",
         "status-bar": "github:jwunderl/pxt-status-bar#v0.4.2"
@@ -11,6 +10,7 @@
     "files": [
         "main.blocks",
         "sprite_kinds.ts",
+        "game_settings.ts",
         "progression.ts",
         "player_stats.ts",
         "player_stat_calculations.ts",
@@ -26,6 +26,8 @@
         "player_movement.ts",
         "player_health.ts",
         "race_definitions.ts",
+        "race_progress.ts",
+        "race_hud.ts",
         "game_flow.ts",
         "freeroam_world.ts",
         "freeroam_coordinates.ts",
@@ -42,6 +44,8 @@
         "ability_boost.ts",
         "ability_blink.ts",
         "ability_drift.ts",
+        "ability_hud.ts",
+        "driving_effects.ts",
         "freeroam_menu.ts",
         "race.ts",
         "minimap.ts",

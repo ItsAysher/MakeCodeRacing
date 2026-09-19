@@ -19,24 +19,53 @@ let playerReverseAcceleration = 0
 let playerBrakingDeceleration = 0
 let playerBaseTurnRate = 0
 
+interface VehicleRatings {
+    rawSpeed: number
+    topSpeed: number
+    acceleration: number
+    braking: number
+    durability: number
+    efficiency: number
+}
+
+/** Pure loadout calculation used by both gameplay and Garage previews. */
+function calculateVehicleRatings(
+    engineTier: number,
+    wheelTier: number,
+    bodyTier: number,
+    brakeTier: number
+) {
+    let ratings: VehicleRatings = {
+        rawSpeed: engineSpeedRatings[engineTier] +
+            wheelSpeedRatings[wheelTier],
+        topSpeed: 0,
+        acceleration: engineAccelerationRatings[engineTier] +
+            wheelAccelerationRatings[wheelTier],
+        braking: brakeRatings[brakeTier],
+        durability: bodyMaximumDurabilities[bodyTier],
+        efficiency: bodyEfficiencyPercents[bodyTier]
+    }
+    ratings.topSpeed = ratings.rawSpeed * ratings.efficiency / 100
+    return ratings
+}
+
 /**
  * Rebuilds all player ratings and physics values from the equipped part tiers.
  * Call this after changing any equipped engine, wheels, body, or brakes.
  */
 function recalculatePlayerStats() {
-    playerRawSpeedRating =
-        engineSpeedRatings[equippedEngineTier] +
-        wheelSpeedRatings[equippedWheelTier]
-    playerAccelerationRating =
-        engineAccelerationRatings[equippedEngineTier] +
-        wheelAccelerationRatings[equippedWheelTier]
-    playerMaximumDurability = bodyMaximumDurabilities[equippedBodyTier]
-    playerEfficiencyPercent = bodyEfficiencyPercents[equippedBodyTier]
-    playerBrakingRating = brakeRatings[equippedBrakeTier]
-
-    // Body efficiency determines how much engine/wheel speed is usable.
-    playerTopSpeedRating =
-        playerRawSpeedRating * playerEfficiencyPercent / 100
+    let ratings = calculateVehicleRatings(
+        equippedEngineTier,
+        equippedWheelTier,
+        equippedBodyTier,
+        equippedBrakeTier
+    )
+    playerRawSpeedRating = ratings.rawSpeed
+    playerTopSpeedRating = ratings.topSpeed
+    playerAccelerationRating = ratings.acceleration
+    playerBrakingRating = ratings.braking
+    playerMaximumDurability = ratings.durability
+    playerEfficiencyPercent = ratings.efficiency
 
     // Convert garage ratings into MakeCode Arcade velocity values while
     // preserving the movement balance used before this refactor.

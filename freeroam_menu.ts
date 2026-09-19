@@ -17,6 +17,21 @@ let freeRoamMenuCoordinateText = "(0,0)"
 let freeRoamMenuWindowWorldTileLeft = 0
 let freeRoamMenuWindowWorldTileTop = 0
 
+enum RacePauseMenuPage {
+    Options,
+    Controls,
+    Settings,
+    ConfirmRestart,
+    ConfirmGarage
+}
+
+let racePauseMenuOpen = false
+let racePauseMenuPage = RacePauseMenuPage.Options
+let racePauseMenuSelection = 0
+let racePauseSettingsSelection = 0
+let racePauseConfirmSelection = 1
+let racePauseRestartCountdownOnClose = false
+
 /** Prints one centered line on the fixed 160-pixel-wide Arcade screen. */
 function printCenteredOnFreeRoamMenu(
     target: Image,
@@ -54,7 +69,7 @@ function drawFreeRoamMenuOption(
     )
 }
 
-/** Redraws the two-option menu after a selection change. */
+/** Redraws the branded Free Roam menu after a selection change. */
 function drawFreeRoamMenuOptions() {
     let menuImage = image.create(160, 120)
     menuImage.fill(12)
@@ -65,26 +80,32 @@ function drawFreeRoamMenuOptions() {
     printCenteredOnFreeRoamMenu(
         menuImage,
         freeRoamThemeName() + " FREE ROAM",
-        16,
+        12,
         10,
         image.font8
     )
     drawFreeRoamMenuOption(
         menuImage,
         "Display Map",
-        40,
+        31,
         freeRoamMenuSelection == 0
     )
     drawFreeRoamMenuOption(
         menuImage,
-        "Exit Freeroam",
-        70,
+        "Ability: " + freeRoamAbilityName(selectedFreeRoamAbility),
+        57,
         freeRoamMenuSelection == 1
+    )
+    drawFreeRoamMenuOption(
+        menuImage,
+        "Exit Free Roam",
+        83,
+        freeRoamMenuSelection == 2
     )
     printCenteredOnFreeRoamMenu(
         menuImage,
-        "A:SELECT B:BACK M:CLOSE",
-        103,
+        "A:SELECT B:BACK MENU:CLOSE",
+        108,
         6,
         image.font5
     )
@@ -472,13 +493,15 @@ function exitFreeRoamFromMenu() {
 function bindFreeRoamMenuControls() {
     controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
         if (freeRoamMenuPage == FreeRoamMenuPage.Options) {
-            freeRoamMenuSelection = 0
+            freeRoamMenuSelection =
+                (freeRoamMenuSelection + 2) % 3
             drawFreeRoamMenuOptions()
         }
     })
     controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
         if (freeRoamMenuPage == FreeRoamMenuPage.Options) {
-            freeRoamMenuSelection = 1
+            freeRoamMenuSelection =
+                (freeRoamMenuSelection + 1) % 3
             drawFreeRoamMenuOptions()
         }
     })
@@ -489,6 +512,9 @@ function bindFreeRoamMenuControls() {
         } else if (freeRoamMenuSelection == 0) {
             freeRoamMenuPage = FreeRoamMenuPage.Map
             drawFreeRoamMapScreen()
+        } else if (freeRoamMenuSelection == 1) {
+            cycleSelectedFreeRoamAbility()
+            drawFreeRoamMenuOptions()
         } else {
             exitFreeRoamFromMenu()
         }
@@ -523,19 +549,376 @@ function openFreeRoamMenu() {
     drawFreeRoamMenuOptions()
 }
 
-// Preserve the simulator's other defaults while moving Menu from ` to M.
-keymap.setSystemKeys(
-    keymap.KeyCode.P,
-    keymap.KeyCode.R,
-    keymap.KeyCode.M,
-    keymap.KeyCode.Backspace
-)
+/** Draws one compact selectable row on the race pause screen. */
+function drawRacePauseOption(
+    target: Image,
+    text: string,
+    top: number,
+    selected: boolean
+) {
+    let left = 18
+    let width = 124
+    let height = 14
+    let backgroundColor = selected ? 9 : 1
+    let borderColor = selected ? 10 : 13
+    let textColor = selected ? 1 : 15
+
+    target.fillRect(left, top, width, height, backgroundColor)
+    target.drawRect(left, top, width, height, borderColor)
+    printCenteredOnFreeRoamMenu(
+        target,
+        text,
+        top + 5,
+        textColor,
+        image.font5
+    )
+}
+
+/** Shared race pause panel treatment used by every submenu. */
+function createRacePausePanel(title: string) {
+    let menuImage = image.create(160, 120)
+    menuImage.fill(12)
+    menuImage.fillRect(5, 5, 150, 110, 1)
+    menuImage.drawRect(5, 5, 150, 110, 13)
+    menuImage.drawRect(7, 7, 146, 106, 15)
+    printCenteredOnFreeRoamMenu(
+        menuImage,
+        title,
+        11,
+        10,
+        image.font8
+    )
+    return menuImage
+}
+
+/** Draws the main pause actions without invoking the system menu. */
+function drawRacePauseOptions() {
+    let menuImage = createRacePausePanel("RACE PAUSED")
+    let options = [
+        "Resume",
+        "Restart Race",
+        "Controls",
+        "Settings",
+        "Return to Garage"
+    ]
+
+    for (let index = 0; index < options.length; index++) {
+        drawRacePauseOption(
+            menuImage,
+            options[index],
+            27 + index * 17,
+            racePauseMenuSelection == index
+        )
+    }
+    printCenteredOnFreeRoamMenu(
+        menuImage,
+        "A:SELECT B:RESUME MENU:RESUME",
+        113,
+        6,
+        image.font5
+    )
+    scene.setBackgroundImage(menuImage)
+}
+
+/** Draws concise driving help while keeping the active race suspended. */
+function drawRacePauseControls() {
+    let menuImage = createRacePausePanel("DRIVING CONTROLS")
+    let lines = [
+        "D-PAD  DRIVE + STEER",
+        "OPPOSITE  BRAKE/REVERSE",
+        "A BUTTON  HARD BRAKE",
+        "MENU  PAUSE",
+        "PASS CHECKPOINT BEFORE FINISH"
+    ]
+
+    for (let index = 0; index < lines.length; index++) {
+        printCenteredOnFreeRoamMenu(
+            menuImage,
+            lines[index],
+            31 + index * 13,
+            index == 4 ? 7 : 15,
+            image.font5
+        )
+    }
+    printCenteredOnFreeRoamMenu(
+        menuImage,
+        "A/B:BACK",
+        103,
+        10,
+        image.font8
+    )
+    scene.setBackgroundImage(menuImage)
+}
+
+/** Draws pause-safe settings without nesting storytelling menus. */
+function drawRacePauseSettings() {
+    let menuImage = createRacePausePanel("RACE SETTINGS")
+    let options = [
+        "Sound: " + racingSettingState(racingSoundEnabled),
+        "Camera Shake: " +
+            racingSettingState(racingCameraShakeEnabled),
+        "High Contrast: " +
+            racingSettingState(racingHighContrastHud),
+        "Driving FX: " +
+            racingSettingState(racingDrivingEffectsEnabled),
+        "Back"
+    ]
+
+    for (let index = 0; index < options.length; index++) {
+        drawRacePauseOption(
+            menuImage,
+            options[index],
+            27 + index * 16,
+            racePauseSettingsSelection == index
+        )
+    }
+    printCenteredOnFreeRoamMenu(
+        menuImage,
+        "A:TOGGLE B:BACK",
+        110,
+        6,
+        image.font5
+    )
+    scene.setBackgroundImage(menuImage)
+}
+
+/** Requires an intentional confirmation before abandoning race progress. */
+function drawRacePauseConfirmation(garage: boolean) {
+    let title = garage ? "RETURN TO GARAGE?" : "RESTART RACE?"
+    let menuImage = createRacePausePanel(title)
+    printCenteredOnFreeRoamMenu(
+        menuImage,
+        garage ? "RACE PROGRESS WILL BE LOST" :
+            "START AGAIN FROM THE GRID",
+        40,
+        7,
+        image.font5
+    )
+    drawRacePauseOption(
+        menuImage,
+        garage ? "Return to Garage" : "Restart Race",
+        61,
+        racePauseConfirmSelection == 0
+    )
+    drawRacePauseOption(
+        menuImage,
+        "Cancel",
+        80,
+        racePauseConfirmSelection == 1
+    )
+    printCenteredOnFreeRoamMenu(
+        menuImage,
+        "A:SELECT B:CANCEL",
+        105,
+        6,
+        image.font5
+    )
+    scene.setBackgroundImage(menuImage)
+}
+
+/** Redraws whichever race pause page is currently active. */
+function drawCurrentRacePausePage() {
+    if (racePauseMenuPage == RacePauseMenuPage.Controls) {
+        drawRacePauseControls()
+    } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
+        drawRacePauseSettings()
+    } else if (racePauseMenuPage == RacePauseMenuPage.ConfirmRestart) {
+        drawRacePauseConfirmation(false)
+    } else if (racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {
+        drawRacePauseConfirmation(true)
+    } else {
+        drawRacePauseOptions()
+    }
+}
+
+/** Returns from a race pause submenu to its main action list. */
+function returnToRacePauseOptions() {
+    racePauseMenuPage = RacePauseMenuPage.Options
+    drawRacePauseOptions()
+}
+
+/** Resumes gameplay and safely restarts a paused grid countdown if needed. */
+function closeRacePauseMenu() {
+    if (!racePauseMenuOpen) {
+        return
+    }
+
+    let restartCountdown = racePauseRestartCountdownOnClose
+    racePauseMenuOpen = false
+    racePauseRestartCountdownOnClose = false
+    game.popScene()
+    refreshPolishHudColors()
+
+    if (restartCountdown &&
+        drivingSessionState == DrivingSessionState.RaceStarting) {
+        // Let the invalidated countdown fiber observe its new session ID and
+        // exit before it could clear the fresh countdown's first frame.
+        let resumedSessionId = raceSessionId
+        control.runInParallel(function () {
+            pause(700)
+            if (!racePauseMenuOpen &&
+                raceSessionId == resumedSessionId &&
+                drivingSessionState == DrivingSessionState.RaceStarting) {
+                runRaceStartCountdown(resumedSessionId)
+            }
+        })
+    }
+}
+
+/** Restarts the selected event after removing the temporary pause scene. */
+function restartRaceFromPauseMenu() {
+    racePauseRestartCountdownOnClose = false
+    racePauseMenuOpen = false
+    game.popScene()
+    leaveCurrentDrivingSession()
+    startNextRace()
+}
+
+/** Leaves the current event and opens the normal Garage flow. */
+function returnToGarageFromRacePauseMenu() {
+    racePauseRestartCountdownOnClose = false
+    racePauseMenuOpen = false
+    game.popScene()
+    leaveCurrentDrivingSession()
+    openGarage(startSelectedDrivingMode)
+}
+
+/** Handles an A press for the current race pause page. */
+function selectRacePauseOption() {
+    if (racePauseMenuPage == RacePauseMenuPage.Controls) {
+        returnToRacePauseOptions()
+    } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
+        if (racePauseSettingsSelection == 0) {
+            racingSoundEnabled = !racingSoundEnabled
+            saveRacingSettings()
+            drawRacePauseSettings()
+        } else if (racePauseSettingsSelection == 1) {
+            racingCameraShakeEnabled = !racingCameraShakeEnabled
+            saveRacingSettings()
+            drawRacePauseSettings()
+        } else if (racePauseSettingsSelection == 2) {
+            racingHighContrastHud = !racingHighContrastHud
+            saveRacingSettings()
+            drawRacePauseSettings()
+        } else if (racePauseSettingsSelection == 3) {
+            racingDrivingEffectsEnabled = !racingDrivingEffectsEnabled
+            saveRacingSettings()
+            if (!racingDrivingEffectsEnabled) {
+                clearDrivingEffects()
+            }
+            drawRacePauseSettings()
+        } else {
+            returnToRacePauseOptions()
+        }
+    } else if (racePauseMenuPage == RacePauseMenuPage.ConfirmRestart ||
+        racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {
+        if (racePauseConfirmSelection == 1) {
+            returnToRacePauseOptions()
+        } else if (racePauseMenuPage ==
+            RacePauseMenuPage.ConfirmRestart) {
+            restartRaceFromPauseMenu()
+        } else {
+            returnToGarageFromRacePauseMenu()
+        }
+    } else if (racePauseMenuSelection == 0) {
+        closeRacePauseMenu()
+    } else if (racePauseMenuSelection == 1) {
+        racePauseMenuPage = RacePauseMenuPage.ConfirmRestart
+        racePauseConfirmSelection = 1
+        drawCurrentRacePausePage()
+    } else if (racePauseMenuSelection == 2) {
+        racePauseMenuPage = RacePauseMenuPage.Controls
+        drawRacePauseControls()
+    } else if (racePauseMenuSelection == 3) {
+        racePauseMenuPage = RacePauseMenuPage.Settings
+        racePauseSettingsSelection = 0
+        drawRacePauseSettings()
+    } else {
+        racePauseMenuPage = RacePauseMenuPage.ConfirmGarage
+        racePauseConfirmSelection = 1
+        drawCurrentRacePausePage()
+    }
+}
+
+/** Installs controller-native controls in the temporary race pause scene. */
+function bindRacePauseMenuControls() {
+    controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+        if (racePauseMenuPage == RacePauseMenuPage.Options) {
+            racePauseMenuSelection = (racePauseMenuSelection + 4) % 5
+        } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
+            racePauseSettingsSelection =
+                (racePauseSettingsSelection + 4) % 5
+        } else if (racePauseMenuPage ==
+            RacePauseMenuPage.ConfirmRestart ||
+            racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {
+            racePauseConfirmSelection =
+                (racePauseConfirmSelection + 1) % 2
+        }
+        drawCurrentRacePausePage()
+    })
+    controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+        if (racePauseMenuPage == RacePauseMenuPage.Options) {
+            racePauseMenuSelection = (racePauseMenuSelection + 1) % 5
+        } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
+            racePauseSettingsSelection =
+                (racePauseSettingsSelection + 1) % 5
+        } else if (racePauseMenuPage ==
+            RacePauseMenuPage.ConfirmRestart ||
+            racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {
+            racePauseConfirmSelection =
+                (racePauseConfirmSelection + 1) % 2
+        }
+        drawCurrentRacePausePage()
+    })
+    controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+        selectRacePauseOption()
+    })
+    controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+        if (racePauseMenuPage == RacePauseMenuPage.Options) {
+            closeRacePauseMenu()
+        } else {
+            returnToRacePauseOptions()
+        }
+    })
+    controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
+        closeRacePauseMenu()
+    })
+}
+
+/** Opens a dedicated pause scene during either the grid or live race. */
+function openRacePauseMenu() {
+    if (racePauseMenuOpen ||
+        (drivingSessionState != DrivingSessionState.RaceStarting &&
+            drivingSessionState != DrivingSessionState.Race)) {
+        return
+    }
+
+    racePauseMenuOpen = true
+    racePauseMenuPage = RacePauseMenuPage.Options
+    racePauseMenuSelection = 0
+    racePauseRestartCountdownOnClose =
+        drivingSessionState == DrivingSessionState.RaceStarting
+
+    if (racePauseRestartCountdownOnClose) {
+        // The countdown is an independent fiber, so invalidate it before the
+        // scene switch. Resume begins a fresh 3-2-1 sequence on the race scene.
+        raceSessionId += 1
+        clearRaceCountdownDisplay()
+    }
+
+    game.pushScene()
+    bindRacePauseMenuControls()
+    drawRacePauseOptions()
+}
 
 // onEvent replaces Arcade's built-in system-menu handler for this button.
 // Outside Free Roam, explicitly preserve the ordinary system menu behavior.
 controller.menu.onEvent(ControllerButtonEvent.Pressed, function () {
     if (drivingSessionState == DrivingSessionState.FreeRoam) {
         openFreeRoamMenu()
+    } else if (drivingSessionState == DrivingSessionState.RaceStarting ||
+        drivingSessionState == DrivingSessionState.Race) {
+        openRacePauseMenu()
     } else {
         scene.systemMenu.showSystemMenu()
     }

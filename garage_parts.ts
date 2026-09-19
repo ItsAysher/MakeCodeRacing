@@ -62,11 +62,67 @@ function choosePurchasablePart(
     setGarageBackground(background)
     let selectedPart = choosePartIndex(partNames, unlockedParts)
 
+    if (selectedPart >= 0) {
+        showPartComparison(background, selectedPart)
+    }
     if (selectedPart >= 0 &&
         unlockPart(partNames[selectedPart], selectedPart, unlockedParts)) {
         return selectedPart
     }
     return -1
+}
+
+function garageRatingDelta(value: number) {
+    if (value > 0) {
+        return " (+" + value + ")"
+    } else if (value < 0) {
+        return " (" + value + ")"
+    }
+    return ""
+}
+
+/** Shows the complete candidate loadout before buying or equipping a part. */
+function showPartComparison(background: GarageBackground, tier: number) {
+    let candidateEngine = equippedEngineTier
+    let candidateWheels = equippedWheelTier
+    let candidateBody = equippedBodyTier
+    let candidateBrakes = equippedBrakeTier
+    if (background == GarageBackground.Engine) {
+        candidateEngine = tier
+    } else if (background == GarageBackground.Wheels) {
+        candidateWheels = tier
+    } else if (background == GarageBackground.Body) {
+        candidateBody = tier
+    } else if (background == GarageBackground.Brakes) {
+        candidateBrakes = tier
+    }
+
+    let current = calculateVehicleRatings(
+        equippedEngineTier,
+        equippedWheelTier,
+        equippedBodyTier,
+        equippedBrakeTier
+    )
+    let candidate = calculateVehicleRatings(
+        candidateEngine,
+        candidateWheels,
+        candidateBody,
+        candidateBrakes
+    )
+    game.showLongText(
+        "LOADOUT PREVIEW" +
+        "\nSpeed: " + candidate.topSpeed +
+            garageRatingDelta(candidate.topSpeed - current.topSpeed) +
+        "\nAcceleration: " + candidate.acceleration +
+            garageRatingDelta(candidate.acceleration - current.acceleration) +
+        "\nBraking: " + candidate.braking +
+            garageRatingDelta(candidate.braking - current.braking) +
+        "\nDurability: " + candidate.durability +
+            garageRatingDelta(candidate.durability - current.durability) +
+        "\nEfficiency: " + candidate.efficiency + "%" +
+            garageRatingDelta(candidate.efficiency - current.efficiency),
+        DialogLayout.Bottom
+    )
 }
 
 function chooseEngine() {

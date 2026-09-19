@@ -30,6 +30,30 @@ let forestMasteryBlockedMenu = false
 
 let forestMasteryRaceCount = 3
 
+// Purpose-built challenger silhouettes. Keep every set in the same up, down,
+// left, right order as CarImageDirection so the shared AI renderer can switch
+// directions without any special cases.
+let forestMasteryRacerImageSets: Image[][] = [
+    [
+        assets.image`forest-bramble-up`,
+        assets.image`forest-bramble-down`,
+        assets.image`forest-bramble-left`,
+        assets.image`forest-bramble-right`
+    ],
+    [
+        assets.image`forest-ember-up`,
+        assets.image`forest-ember-down`,
+        assets.image`forest-ember-left`,
+        assets.image`forest-ember-right`
+    ],
+    [
+        assets.image`forest-phantom-up`,
+        assets.image`forest-phantom-down`,
+        assets.image`forest-phantom-left`,
+        assets.image`forest-phantom-right`
+    ]
+]
+
 // NPC locations are section centers, so they sit on the guaranteed generated
 // trail. Each encounter has several fallbacks in case a river crosses its
 // preferred section during this world's seeded generation.
@@ -165,11 +189,18 @@ function chooseForestMasteryEncounterLocations() {
     }
 }
 
-/** Builds a visible B2 placeholder car for a forest challenger. */
+/** Builds a distinct native racer, with a small gold badge after victory. */
 function forestMasteryNpcImage(encounter: number) {
-    let npcImage = allCarBodyImages[1][CarImageDirection.Right].clone()
-    let npcColors = [2, 4, 9]
-    npcImage.replace(10, npcColors[encounter])
+    let npcImage = forestMasteryRacerImageSets[encounter][
+        CarImageDirection.Right
+    ].clone()
+    if (forestMasteryCompletedRaceMask & (1 << encounter)) {
+        npcImage.setPixel(2, 0, 5)
+        npcImage.setPixel(1, 1, 5)
+        npcImage.setPixel(2, 1, 5)
+        npcImage.setPixel(3, 1, 5)
+        npcImage.setPixel(2, 2, 5)
+    }
     return npcImage
 }
 
@@ -266,15 +297,12 @@ function stopForestMasteryEncounterSystem() {
     }
 }
 
-/** Creates four cached B2 directions for the active challenger. */
+/** Clones all four native directions for the active challenger. */
 function createForestMasteryOpponentImages(encounter: number) {
     let racerImages: Image[] = []
-    let racerColors = [2, 4, 9]
 
-    for (let sourceImage of allCarBodyImages[1]) {
-        let racerImage = sourceImage.clone()
-        racerImage.replace(10, racerColors[encounter])
-        racerImages.push(racerImage)
+    for (let sourceImage of forestMasteryRacerImageSets[encounter]) {
+        racerImages.push(sourceImage.clone())
     }
     return racerImages
 }
@@ -442,10 +470,12 @@ function completeForestMasteryRace(playerWon: boolean) {
             if (forestNpcRaceWins >= 3 && !forestBoostUnlocked) {
                 forestNpcRaceWins = 3
                 forestBoostUnlocked = true
+                selectFreeRoamAbility(FreeRoamAbility.Boost)
                 game.splash(
                     "BOOST UNLOCKED",
-                    "Press J in any Free Roam for a short 1.5x speed boost."
+                    "Boost selected. Press B in Free Roam for a short speed burst."
                 )
+                showAbilityToast("BOOST SELECTED - B", 5)
             }
             saveGameProgress()
         } else {

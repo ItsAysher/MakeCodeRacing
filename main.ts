@@ -1,19 +1,49 @@
+loadRacingSettings()
 let existingGameProgressLoaded = loadGameProgress()
 recalculatePlayerStats()
 
 /**
  * Blocks the opening sequence until the player starts or reads the instructions.
  */
+function showHowToPlay() {
+    game.showLongText(
+        "DRIVING\nD-pad: throttle + steer\nA: brake / shift to reverse\nMenu: pause or map\n\nRace through checkpoints in order and protect your durability.",
+        DialogLayout.Full
+    )
+    game.showLongText(
+        "FREE ROAM\nB: use selected ability\nMenu: map + ability selector\n\nFind rival activities to unlock Boost, Blink, and Drift.",
+        DialogLayout.Full
+    )
+    game.showLongText(
+        "GARAGE\nWin races for cash. Upgrade acceleration, handling, durability, and braking. Set personal records and earn circuit medals.",
+        DialogLayout.Full
+    )
+}
+
 function showStartMenu() {
     let hasStarted = false
 
     while (!hasStarted) {
-        story.showPlayerChoices("Start Game", "How to Play")
+        story.showPlayerChoices(
+            "Start Game",
+            "How to Play",
+            "Settings",
+            "About"
+        )
 
         if (story.checkLastAnswer("Start Game")) {
             hasStarted = true
+        } else if (story.checkLastAnswer("How to Play")) {
+            showHowToPlay()
+        } else if (story.checkLastAnswer("Settings")) {
+            showRacingSettingsMenu()
         } else {
-            game.showLongText("Choose car parts in the Garage, then race to earn cash and wins.", DialogLayout.Bottom)
+            game.showLongText(
+                "MAKECODE RACING\nVersion " + racingGameVersion +
+                "\n\nProgress: " +
+                (existingGameProgressLoaded ? "Save loaded" : "New game"),
+                DialogLayout.Full
+            )
         }
     }
 }
@@ -38,6 +68,13 @@ function introduceNewPlayer() {
  */
 function runStartingSequence() {
     story.startCutscene(function () {
+        if (racingSaveCompatibilityWarning) {
+            game.showLongText(
+                "SAVE PROTECTED\nA save from a newer or incomplete version was found. " +
+                    "This session will not overwrite it.",
+                DialogLayout.Full
+            )
+        }
         if (existingGameProgressLoaded && playerName.length > 0) {
             story.printCharacterText("Welcome back, " + playerName)
         } else {

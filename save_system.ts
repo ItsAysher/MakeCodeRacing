@@ -2,10 +2,13 @@
 
 const racingSaveKey = "makecode-racing-save"
 const racingPlayerNameKey = "makecode-racing-player-name"
-const racingSaveVersion = 1
+const racingSaveVersion = 2
 const racingSaveValueCount = 38
 const racingMasterySaveValueCount = 49
 const racingMapActivitySaveValueCount = 70
+const racingRecordSaveValueCount = 79
+let racingSaveWritesEnabled = true
+let racingSaveCompatibilityWarning = false
 
 function saveBoolean(value: boolean) {
     return value ? 1 : 0
@@ -33,6 +36,9 @@ function loadOwnedPaintColor(colorValue: number, fallbackColor: number) {
 
 /** Writes all permanent player progression as one coherent save record. */
 function saveGameProgress() {
+    if (!racingSaveWritesEnabled) {
+        return
+    }
     let saveData: number[] = []
 
     saveData.push(racingSaveVersion)
@@ -95,22 +101,46 @@ function saveGameProgress() {
             ))
         }
     }
+
+    for (let index = 0; index < 3; index++) {
+        saveData.push(bestRaceTimeMilliseconds[index])
+    }
+    for (let index = 0; index < 3; index++) {
+        saveData.push(bestLapTimeMilliseconds[index])
+    }
+    for (let index = 0; index < 3; index++) {
+        saveData.push(bestRaceFinish[index])
+    }
     settings.writeNumberArray(racingSaveKey, saveData)
 }
 
 /** Stores the player name separately so ordinary progression saves do not rewrite it. */
 function savePlayerName() {
-    settings.writeString(racingPlayerNameKey, playerName)
+    if (racingSaveWritesEnabled) {
+        settings.writeString(racingPlayerNameKey, playerName)
+    }
 }
 
 /** Restores saved progression, returning false when no compatible save exists. */
 function loadGameProgress() {
     let saveData = settings.readNumberArray(racingSaveKey)
-    if (!saveData ||
-        saveData.length < racingSaveValueCount ||
-        saveData[0] != racingSaveVersion) {
+    if (!saveData) {
+        racingSaveWritesEnabled = true
+        racingSaveCompatibilityWarning = false
         return false
     }
+    let storedVersion = saveData[0]
+    let expectedLength = storedVersion == 1 ?
+        racingSaveValueCount : racingRecordSaveValueCount
+    if ((storedVersion != 1 && storedVersion != racingSaveVersion) ||
+        saveData.length < expectedLength) {
+        racingSaveWritesEnabled = false
+        racingSaveCompatibilityWarning = true
+        return false
+    }
+    racingSaveWritesEnabled = true
+    racingSaveCompatibilityWarning = false
+    let loadedSaveVersion = storedVersion
 
     cash = loadWholeNumber(saveData[1], 0, 999999999)
     racesRaced = loadWholeNumber(saveData[3], 0, 999999999)
@@ -230,8 +260,19 @@ function loadGameProgress() {
             )
         }
     }
+    resetRaceRecordProgress()
+    if (saveData.length >= racingRecordSaveValueCount) {
+        loadRaceRecordProgress(
+            [saveData[70], saveData[71], saveData[72]],
+            [saveData[73], saveData[74], saveData[75]],
+            [saveData[76], saveData[77], saveData[78]]
+        )
+    }
     playerName = settings.readString(racingPlayerNameKey) || ""
     playerPaintRevision += 1
+    if (loadedSaveVersion == 1) {
+        saveGameProgress()
+    }
     return true
 }
 
@@ -239,6 +280,8 @@ function loadGameProgress() {
 function resetGameProgress() {
     settings.remove(racingSaveKey)
     settings.remove(racingPlayerNameKey)
+    racingSaveWritesEnabled = true
+    racingSaveCompatibilityWarning = false
 
     cash = 0
     wins = 0
@@ -267,6 +310,7 @@ function resetGameProgress() {
     resetFreeRoamMapActivityDiscoveries()
     highwayDriftChallengeMask = 0
     highwayDriftUnlocked = false
+    resetRaceRecordProgress()
     playerPaintRevision += 1
     recalculatePlayerStats()
 }

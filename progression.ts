@@ -5,8 +5,18 @@ let wins = 0
 let racesRaced = 0
 let playerName = ""
 
-/** Applies one completed race result to the player's session progression. */
+function newlyUnlockedRaceContent(previousWins: number) {
+    if (previousWins < 3 && wins >= 3) {
+        return "INTERMEDIATE RACES + FREE ROAM"
+    } else if (previousWins < 7 && wins >= 7) {
+        return "EXPERT RACES"
+    }
+    return ""
+}
+
+/** Applies one completed race result and returns any newly crossed milestone. */
 function recordRaceResult(won: boolean, prizeMoney: number) {
+    let previousWins = wins
     racesRaced += 1
     cash += prizeMoney
 
@@ -15,4 +25,5 @@ function recordRaceResult(won: boolean, prizeMoney: number) {
     }
 
     saveGameProgress()
+    return newlyUnlockedRaceContent(previousWins)
 }

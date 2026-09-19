@@ -11,7 +11,7 @@ let brakeNames = ["BR1", "BR2", "BR3"]
 
 // Tier 1 parts are owned at the start. Higher-tier parts are purchased
 // separately for each category.
-let partPrices = [0, 300, 1000]
+let partPrices = [0, 250, 900]
 let engineUnlocked = [true, false, false]
 let wheelsUnlocked = [true, false, false]
 let bodyUnlocked = [true, false, false]
