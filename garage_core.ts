@@ -16,46 +16,63 @@ function showExtendedGarageMenu(options: string[]) {
     return story.getLastAnswer()
 }
 
-/** Shows a paginated list and returns its selected source index, or -1 on Back. */
-function showPaginatedGarageMenu(options: string[], pageSize: number) {
-    let firstOptionOnPage = 0
+/**
+ * Shows a list without ever exceeding Story's four visible menu slots.
+ * Long lists always reserve slot three for More and slot four for Back.
+ */
+function showPaginatedGarageMenu(options: string[]) {
+    if (options.length == 0) {
+        return -1
+    }
 
-    while (garageIsOpen) {
-        let pageOptions: string[] = []
-        let lastOptionOnPage = Math.min(
-            firstOptionOnPage + pageSize,
-            options.length
-        )
-
-        for (let index = firstOptionOnPage; index < lastOptionOnPage; index++) {
-            pageOptions.push(options[index])
+    if (options.length <= 2) {
+        let shortOptions: string[] = []
+        for (let option of options) {
+            shortOptions.push(option)
         }
+        shortOptions.push("Back")
+        let shortSelection = showExtendedGarageMenu(shortOptions)
+        if (shortSelection == "Back") {
+            return -1
+        }
+        for (let index = 0; index < options.length; index++) {
+            if (shortSelection == options[index]) {
+                return index
+            }
+        }
+        return -1
+    }
 
-        if (firstOptionOnPage > 0) {
+    let page = 0
+    let pageCount = Math.idiv(options.length + 1, 2)
+    while (true) {
+        let firstIndex = page * 2
+        let secondIndex = firstIndex + 1
+        let pageOptions: string[] = [options[firstIndex]]
+
+        if (secondIndex < options.length) {
+            pageOptions.push(options[secondIndex])
+        } else {
+            // Keep More and Back in their predictable third and fourth slots.
             pageOptions.push("Previous")
         }
-        if (lastOptionOnPage < options.length) {
-            pageOptions.push("More")
-        }
+        pageOptions.push("More")
         pageOptions.push("Back")
 
         let selectedOption = showExtendedGarageMenu(pageOptions)
         if (selectedOption == "Previous") {
-            firstOptionOnPage = Math.max(0, firstOptionOnPage - pageSize)
+            page = (page + pageCount - 1) % pageCount
         } else if (selectedOption == "More") {
-            firstOptionOnPage = lastOptionOnPage
+            page = (page + 1) % pageCount
         } else if (selectedOption == "Back") {
             return -1
-        } else {
-            for (let index = firstOptionOnPage; index < lastOptionOnPage; index++) {
-                if (selectedOption == options[index]) {
-                    return index
-                }
-            }
+        } else if (selectedOption == options[firstIndex]) {
+            return firstIndex
+        } else if (secondIndex < options.length &&
+            selectedOption == options[secondIndex]) {
+            return secondIndex
         }
     }
-
-    return -1
 }
 
 function setGarageBackground(background: GarageBackground) {

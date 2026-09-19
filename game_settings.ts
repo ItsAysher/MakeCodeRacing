@@ -62,42 +62,96 @@ function racingSoundsAreEnabled() {
     return racingSoundEnabled
 }
 
+function toggleRacingCameraShake() {
+    racingCameraShakeEnabled = !racingCameraShakeEnabled
+    saveRacingSettings()
+}
+
+function toggleRacingDrivingEffects() {
+    racingDrivingEffectsEnabled = !racingDrivingEffectsEnabled
+    saveRacingSettings()
+    if (!racingDrivingEffectsEnabled) {
+        clearDrivingEffects()
+    }
+}
+
+/** Keeps readability and sensory controls in a dedicated four-slot submenu. */
+function showRacingAccessibilityMenu() {
+    let leaveAccessibility = false
+    let accessibilityPage = 0
+
+    while (!leaveAccessibility) {
+        let contrastChoice = "High Contrast HUD: " +
+            racingSettingState(racingHighContrastHud)
+        let motionChoice = "Camera Motion: " +
+            racingSettingState(racingCameraShakeEnabled)
+        let effectsChoice = "Driving FX: " +
+            racingSettingState(racingDrivingEffectsEnabled)
+        let cuesChoice = "Sound Cues: " +
+            racingSettingState(racingSoundEnabled)
+
+        if (accessibilityPage == 0) {
+            story.showPlayerChoices(
+                contrastChoice, motionChoice, "More", "Back"
+            )
+        } else {
+            story.showPlayerChoices(
+                effectsChoice, cuesChoice, "More", "Back"
+            )
+        }
+
+        if (story.checkLastAnswer(contrastChoice)) {
+            racingHighContrastHud = !racingHighContrastHud
+            saveRacingSettings()
+            refreshPolishHudColors()
+        } else if (story.checkLastAnswer(motionChoice)) {
+            toggleRacingCameraShake()
+        } else if (story.checkLastAnswer(effectsChoice)) {
+            toggleRacingDrivingEffects()
+        } else if (story.checkLastAnswer(cuesChoice)) {
+            racingSoundEnabled = !racingSoundEnabled
+            saveRacingSettings()
+        } else if (story.checkLastAnswer("More")) {
+            accessibilityPage = (accessibilityPage + 1) % 2
+        } else {
+            leaveAccessibility = true
+        }
+    }
+}
+
 /** Player-facing settings available before play and from the Garage. */
 function showRacingSettingsMenu() {
     let leaveSettings = false
+    let settingsPage = 0
 
     while (!leaveSettings) {
         let soundChoice = "Sound: " + racingSettingState(racingSoundEnabled)
         let shakeChoice = "Camera Shake: " +
             racingSettingState(racingCameraShakeEnabled)
-        let contrastChoice = "High Contrast HUD: " +
-            racingSettingState(racingHighContrastHud)
         let effectsChoice = "Driving FX: " +
             racingSettingState(racingDrivingEffectsEnabled)
-        story.showPlayerChoices(
-            soundChoice,
-            shakeChoice,
-            contrastChoice,
-            effectsChoice,
-            "Back"
-        )
+
+        if (settingsPage == 0) {
+            story.showPlayerChoices(
+                soundChoice, "Accessibility", "More", "Back"
+            )
+        } else {
+            story.showPlayerChoices(
+                shakeChoice, effectsChoice, "More", "Back"
+            )
+        }
 
         if (story.checkLastAnswer(soundChoice)) {
             racingSoundEnabled = !racingSoundEnabled
             saveRacingSettings()
+        } else if (story.checkLastAnswer("Accessibility")) {
+            showRacingAccessibilityMenu()
         } else if (story.checkLastAnswer(shakeChoice)) {
-            racingCameraShakeEnabled = !racingCameraShakeEnabled
-            saveRacingSettings()
-        } else if (story.checkLastAnswer(contrastChoice)) {
-            racingHighContrastHud = !racingHighContrastHud
-            saveRacingSettings()
-            refreshPolishHudColors()
+            toggleRacingCameraShake()
         } else if (story.checkLastAnswer(effectsChoice)) {
-            racingDrivingEffectsEnabled = !racingDrivingEffectsEnabled
-            saveRacingSettings()
-            if (!racingDrivingEffectsEnabled) {
-                clearDrivingEffects()
-            }
+            toggleRacingDrivingEffects()
+        } else if (story.checkLastAnswer("More")) {
+            settingsPage = (settingsPage + 1) % 2
         } else {
             leaveSettings = true
         }

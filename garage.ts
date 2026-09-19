@@ -88,21 +88,20 @@ function showPlayerStatsMenu() {
 
     while (!leaveStatsMenu && garageIsOpen) {
         setGarageBackground(GarageBackground.Main)
-        story.showPlayerChoices(
+        let selectedStat = showPaginatedGarageMenu([
             "Career Progress",
             "Race Records",
             "Lifetime Stats",
-            "Reset Progress",
-            "Back"
-        )
+            "Reset Progress"
+        ])
 
-        if (story.checkLastAnswer("Career Progress")) {
+        if (selectedStat == 0) {
             showCareerProgress()
-        } else if (story.checkLastAnswer("Race Records")) {
+        } else if (selectedStat == 1) {
             showRaceRecords()
-        } else if (story.checkLastAnswer("Lifetime Stats")) {
+        } else if (selectedStat == 2) {
             showPlayerStats()
-        } else if (story.checkLastAnswer("Reset Progress")) {
+        } else if (selectedStat == 3) {
             confirmResetProgress()
         } else {
             leaveStatsMenu = true
@@ -113,16 +112,17 @@ function showPlayerStatsMenu() {
 /** Runs the Garage until the player chooses a driving mode. */
 function showGarage() {
     garageIsOpen = true
+    let garagePage = 0
 
     while (garageIsOpen) {
         setGarageBackground(GarageBackground.Main)
-        story.showPlayerChoices(
-            "Parts",
-            "Paint",
-            "Player Stats",
-            "Settings",
-            "Drive"
-        )
+        if (garagePage == 0) {
+            story.showPlayerChoices("Parts", "Paint", "More", "Drive")
+        } else {
+            story.showPlayerChoices(
+                "Player Stats", "Settings", "More", "Drive"
+            )
+        }
 
         if (story.checkLastAnswer("Parts")) {
             showPartsMenu()
@@ -132,7 +132,9 @@ function showGarage() {
             showPlayerStatsMenu()
         } else if (story.checkLastAnswer("Settings")) {
             showRacingSettingsMenu()
-        } else {
+        } else if (story.checkLastAnswer("More")) {
+            garagePage = (garagePage + 1) % 2
+        } else if (story.checkLastAnswer("Drive")) {
             chooseDrivingMode()
         }
     }

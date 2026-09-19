@@ -199,24 +199,23 @@ function showPartsMenu() {
         let wheelName = wheelNames[equippedWheelTier]
         let bodyName = bodyNames[equippedBodyTier]
         let brakeName = brakeNames[equippedBrakeTier]
-        let selectedOption = showExtendedGarageMenu([
+        let selectedOption = showPaginatedGarageMenu([
             "Engine: " + engineName,
             "Wheels: " + wheelName,
             "Body: " + bodyName,
             "Brakes: " + brakeName,
-            "View Car Stats",
-            "Back"
+            "View Car Stats"
         ])
 
-        if (selectedOption == "Engine: " + engineName) {
+        if (selectedOption == 0) {
             chooseEngine()
-        } else if (selectedOption == "Wheels: " + wheelName) {
+        } else if (selectedOption == 1) {
             chooseWheels()
-        } else if (selectedOption == "Body: " + bodyName) {
+        } else if (selectedOption == 2) {
             chooseBody()
-        } else if (selectedOption == "Brakes: " + brakeName) {
+        } else if (selectedOption == 3) {
             chooseBrakes()
-        } else if (selectedOption == "View Car Stats") {
+        } else if (selectedOption == 4) {
             showCarStats()
         } else {
             leavePartsMenu = true

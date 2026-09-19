@@ -33,7 +33,8 @@ Intermediate races and all Free Roam themes unlock at three wins. Expert races u
 - Infinite seed-stable Forest, Highway, and Cave worlds built around authored home areas, with a streamed map, home guidance, and discovered-activity markers.
 - Three mastery paths: defeat Forest rivals for Boost, complete Highway loops for Drift, and return Cave racer statues for Blink.
 - MakeCode-native mentor cars, stone racers, landmarks, ability icons, HUD art, driving effects, and accessibility-aware presentation.
-- Player options for sound, camera shake, high-contrast HUD colors, and driving effects. Presentation settings are stored independently from career progress.
+- Player options for sound, camera shake, high-contrast HUD colors, and driving effects. A dedicated Accessibility submenu exposes the sensory/readability controls, and presentation settings are stored independently from career progress.
+- Four-slot Garage menus keep `More` in the third slot and `Back` in the fourth. The top-level Garage keeps `Drive` in the fourth slot on every page so Race and Free Roam are always reachable.
 
 ## Controls
 
@@ -134,7 +135,7 @@ Owns both controller-native driving menus. In Free Roam it offers Display Map, a
 
 ### `game_settings.ts`
 
-Defines the product version and persistent presentation options for sound, camera shake, high-contrast HUD colors, driving effects, and selected ability. Settings use a separate versioned record so toggles never rewrite career progress.
+Defines the product version and persistent presentation options for sound, camera shake, high-contrast HUD colors, driving effects, and selected ability. Its paged Settings and Accessibility menus keep navigation actions in predictable slots. Settings use a separate versioned record so toggles never rewrite career progress.
 
 ### `game_flow.ts`
 
@@ -142,11 +143,11 @@ Defines the selected driving mode and the single authoritative driving-session s
 
 ### `garage.ts`
 
-Owns the main Garage navigation. It routes to Race, Parts, Paint, Vehicle Stats, Career, Records, Settings, and Reset Progress while surfacing the next progression milestone.
+Owns the main Garage navigation. It routes to Race, Parts, Paint, Vehicle Stats, Career, Records, Settings, and Reset Progress while surfacing the next progression milestone. `Drive` remains visible on both Garage pages.
 
 ### `garage_core.ts`
 
-Contains shared Garage state, background selection, extended and paginated menu helpers, and the cutscene wrapper used to open the Garage and launch the next driving mode.
+Contains shared Garage state, background selection, strict four-slot paginated menu helpers, and the cutscene wrapper used to open the Garage and launch the next driving mode.
 
 ### `garage_mode_selection.ts`
 

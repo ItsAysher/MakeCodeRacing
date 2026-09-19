@@ -44,7 +44,7 @@ function showBuyPaintMenu() {
             paintOptions.push(paintShopLabel(index))
         }
 
-        let selectedPaint = showPaginatedGarageMenu(paintOptions, 4)
+        let selectedPaint = showPaginatedGarageMenu(paintOptions)
         if (selectedPaint < 0) {
             return
         }
@@ -69,7 +69,7 @@ function customizePaintPart(part: CarPaintPart) {
         }
     }
 
-    let selectedOption = showPaginatedGarageMenu(colorOptions, 4)
+    let selectedOption = showPaginatedGarageMenu(colorOptions)
     if (selectedOption < 0) {
         return
     }
