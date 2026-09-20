@@ -3,14 +3,14 @@
     "description": "",
     "dependencies": {
         "device": "*",
-        "arcade-storytelling": "github:microsoft/arcade-storytelling#v1.0.3",
-        "arcade-minimap": "github:microsoft/arcade-minimap#v0.6.1",
-        "status-bar": "github:jwunderl/pxt-status-bar#v0.4.2"
+        "arcade-storytelling": "github:microsoft/arcade-storytelling#v1.0.3"
     },
     "files": [
         "main.blocks",
         "sprite_kinds.ts",
+        "ui_text.ts",
         "game_settings.ts",
+        "driving_assists.ts",
         "progression.ts",
         "player_stats.ts",
         "player_stat_calculations.ts",
@@ -27,6 +27,7 @@
         "player_health.ts",
         "race_definitions.ts",
         "race_progress.ts",
+        "championship.ts",
         "race_hud.ts",
         "game_flow.ts",
         "freeroam_world.ts",
@@ -50,6 +51,7 @@
         "race.ts",
         "minimap.ts",
         "ai_racers.ts",
+        "rival_cards.ts",
         "garage_core.ts",
         "garage_parts.ts",
         "garage_paint.ts",

@@ -3,7 +3,7 @@
 let raceMinimap: Sprite = null
 let cachedRaceMinimapFullMap: Image = null
 let cachedRaceMinimapFrame: Image = null
-let raceMinimapScale = MinimapScale.Eighth
+let raceMinimapScale = 3
 let raceMinimapContentWidth = 60
 let raceMinimapContentHeight = 40
 let cachedRaceMinimapPlayerX = -1
@@ -11,6 +11,43 @@ let cachedRaceMinimapPlayerY = -1
 let cachedRaceMinimapDirection = -1
 let cachedRaceMinimapBodyTier = -1
 let cachedRaceMinimapPaintRevision = -1
+
+/** Renders the current tilemap at a power-of-two scale without an extension. */
+function createNativeMinimapImage(scale: number) {
+    let tileMap = game.currentScene().tileMap
+    if (!tileMap) {
+        return image.create(1, 1)
+    }
+
+    let rowCount = tileMap.areaHeight() >> tileMap.scale
+    let columnCount = tileMap.areaWidth() >> tileMap.scale
+    let tileSize = 1 << tileMap.scale
+    let result = image.create(
+        columnCount * tileSize >> scale,
+        rowCount * tileSize >> scale
+    )
+    let sampleStep = 1 << scale
+    for (let row = 0; row < rowCount; row++) {
+        for (let column = 0; column < columnCount; column++) {
+            let tile = tileMap.getTileImage(tileMap.getTileIndex(column, row))
+            let left = column * tileSize >> scale
+            let top = row * tileSize >> scale
+            for (let y = 0; y < tile.height; y += sampleStep) {
+                for (let x = 0; x < tile.width; x += sampleStep) {
+                    let color = tile.getPixel(x, y)
+                    if (color != 0) {
+                        result.setPixel(
+                            left + (x >> scale),
+                            top + (y >> scale),
+                            color
+                        )
+                    }
+                }
+            }
+        }
+    }
+    return result
+}
 
 /** Invalidates track-dependent minimap data before a different race map loads. */
 function resetRaceMinimapCache() {
@@ -25,8 +62,7 @@ function resetRaceMinimapCache() {
 /** Builds the static full-track image once for the active race map. */
 function ensureRaceMinimapCache() {
     if (!cachedRaceMinimapFullMap) {
-        let map = minimap.minimap(raceMinimapScale, 0, 0)
-        cachedRaceMinimapFullMap = minimap.getImage(map)
+        cachedRaceMinimapFullMap = createNativeMinimapImage(raceMinimapScale)
     }
 
     if (!cachedRaceMinimapFrame) {
@@ -41,7 +77,7 @@ function ensureRaceMinimapCache() {
 /** Draws the moving player marker over the cached map viewport. */
 function drawPlayerOnRaceMinimap(sourceLeft: number, sourceTop: number) {
     let spriteImageScale = Math.max(
-        raceMinimapScale - MinimapSpriteScale.Double,
+        raceMinimapScale - 1,
         0
     )
     let sampleStep = 1 << spriteImageScale

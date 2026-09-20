@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "canvas": {
+    "width": 160,
+    "height": 120
+  },
+  "checkpoints": {
+    "new-game-intro": {
+      "sha256": "63a5e8f9ad43df1dfb9f74e0e3f8545c802a9a19984348056d9b0e7c4fbcc1dd",
+      "width": 160,
+      "height": 120,
+      "colors": 2
+    },
+    "name-entry-message": {
+      "sha256": "8ebfa05e74c674352d6c912f874410519dd40cc4f9c497ac8e249e0cab9b3f26",
+      "width": 160,
+      "height": 120,
+      "colors": 8
+    },
+    "start-menu": {
+      "sha256": "4343a95b56c01b83c4cde3948e8fe8d600347f3994707505f9b2ebed79656f12",
+      "width": 160,
+      "height": 120,
+      "colors": 4
+    },
+    "garage-page-1": {
+      "sha256": "a579795326aa68d059dfef6e62851a7cc06d8bf6f5be39b61c4e2243d0483a42",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "garage-page-2": {
+      "sha256": "935ad895621d57ca1355ee2963eff9370e89178848d39d846e738e0b78261f3b",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "settings-page-1": {
+      "sha256": "fddd19b13904bfb673bab15feb3561e3664bf94c9ed39d3a0d1f282c51904662",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "settings-page-2": {
+      "sha256": "20e3bd28e5954260387af1b7b573375e4647a74916cd5dbec521392e7ffb7ee6",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "accessibility-page-1": {
+      "sha256": "72f4d73f32271dbbb7a867ca4069e15f962fba0c6a2a90cae617800c7b9309af",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "accessibility-page-2": {
+      "sha256": "02b760903c6626e6186a06df2b8c8d0c339d96faedc724a921bb3e469dad7479",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "settings-after-back": {
+      "sha256": "fddd19b13904bfb673bab15feb3561e3664bf94c9ed39d3a0d1f282c51904662",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "garage-after-back": {
+      "sha256": "935ad895621d57ca1355ee2963eff9370e89178848d39d846e738e0b78261f3b",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "drive-modes": {
+      "sha256": "60d74d9a34b6fd19ae48ec2d7e8cbc50614b193ea303cf0cd0c32975e0e06271",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "race-list": {
+      "sha256": "e6a7a91600bcbff8dcba0afddff0ea661ee9d8d01c05295ab47549ff2c9774df",
+      "width": 160,
+      "height": 120,
+      "colors": 7
+    },
+    "race-field-card": {
+      "sha256": "0fbbd746d8b0cd279bf0f4d686cafac8ff06cde68f9718f4d7f7d9f201b18c2e",
+      "width": 160,
+      "height": 120,
+      "colors": 9
+    },
+    "race-reverse-card": {
+      "sha256": "7b6fd3464040ce550f8e0c78631887dd926894e98f0505bdcafcf6072df3f4ac",
+      "width": 160,
+      "height": 120,
+      "colors": 9
+    },
+    "race-intro": {
+      "sha256": "1837400c4b54691d34fa7d9a15ad706f230cdbf8171b68ddaf75e332b993bced",
+      "width": 160,
+      "height": 120,
+      "colors": 9
+    }
+  }
+}

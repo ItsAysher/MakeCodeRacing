@@ -2,6 +2,9 @@
 
 const racingSaveKey = "makecode-racing-save"
 const racingPlayerNameKey = "makecode-racing-player-name"
+const racingReverseRecordSaveKey = "makecode-racing-reverse-records"
+const racingReverseRecordSaveVersion = 1
+const racingReverseRecordSaveValueCount = 10
 const racingSaveVersion = 2
 const racingSaveValueCount = 38
 const racingMasterySaveValueCount = 49
@@ -112,6 +115,20 @@ function saveGameProgress() {
         saveData.push(bestRaceFinish[index])
     }
     settings.writeNumberArray(racingSaveKey, saveData)
+
+    // Keep the established 79-value progression payload byte-for-byte
+    // compatible. Reverse-layout records live in a small independent record.
+    let reverseRecords = [racingReverseRecordSaveVersion]
+    for (let index = 3; index < 6; index++) {
+        reverseRecords.push(bestRaceTimeMilliseconds[index])
+    }
+    for (let index = 3; index < 6; index++) {
+        reverseRecords.push(bestLapTimeMilliseconds[index])
+    }
+    for (let index = 3; index < 6; index++) {
+        reverseRecords.push(bestRaceFinish[index])
+    }
+    settings.writeNumberArray(racingReverseRecordSaveKey, reverseRecords)
 }
 
 /** Stores the player name separately so ordinary progression saves do not rewrite it. */
@@ -268,6 +285,18 @@ function loadGameProgress() {
             [saveData[76], saveData[77], saveData[78]]
         )
     }
+    let reverseRecords = settings.readNumberArray(
+        racingReverseRecordSaveKey
+    )
+    if (reverseRecords &&
+        reverseRecords.length >= racingReverseRecordSaveValueCount &&
+        reverseRecords[0] == racingReverseRecordSaveVersion) {
+        loadReverseRaceRecordProgress(
+            [reverseRecords[1], reverseRecords[2], reverseRecords[3]],
+            [reverseRecords[4], reverseRecords[5], reverseRecords[6]],
+            [reverseRecords[7], reverseRecords[8], reverseRecords[9]]
+        )
+    }
     playerName = settings.readString(racingPlayerNameKey) || ""
     playerPaintRevision += 1
     if (loadedSaveVersion == 1) {
@@ -280,6 +309,8 @@ function loadGameProgress() {
 function resetGameProgress() {
     settings.remove(racingSaveKey)
     settings.remove(racingPlayerNameKey)
+    settings.remove(racingReverseRecordSaveKey)
+    resetChampionshipProgress()
     racingSaveWritesEnabled = true
     racingSaveCompatibilityWarning = false
 

@@ -6,6 +6,11 @@ enum RaceDifficulty {
     Expert
 }
 
+enum RaceLayout {
+    Forward,
+    Reverse
+}
+
 interface RaceDefinition {
     name: string
     map: tiles.TileMapData
@@ -123,6 +128,42 @@ let expertRaceDefinition: RaceDefinition = {
 }
 
 let selectedRace = RaceDifficulty.Beginner
+let selectedRaceLayout = RaceLayout.Forward
+
+function raceLayoutLabel(layout: RaceLayout) {
+    return layout == RaceLayout.Reverse ? "REVERSE" : "FORWARD"
+}
+
+function raceLayoutShortLabel(layout: RaceLayout) {
+    return layout == RaceLayout.Reverse ? "REV" : "FWD"
+}
+
+function raceStartDirection(layout: RaceLayout) {
+    return layout == RaceLayout.Reverse ?
+        CarImageDirection.Left : CarImageDirection.Right
+}
+
+/**
+ * Returns the authored loop in travel order. Reversing the gate list makes
+ * the first reverse gate the near-grid gate at the other end of the starting
+ * straight, while retaining every authored corner and the physical finish.
+ */
+function raceCheckpointsForLayout(
+    definition: RaceDefinition,
+    layout: RaceLayout
+) {
+    if (layout == RaceLayout.Forward) {
+        return definition.aiCheckpoints
+    }
+
+    let reversedCheckpoints: number[][] = []
+    for (let index = definition.aiCheckpoints.length - 1;
+        index >= 0;
+        index--) {
+        reversedCheckpoints.push(definition.aiCheckpoints[index])
+    }
+    return reversedCheckpoints
+}
 
 function raceDefinitionForDifficulty(difficulty: RaceDifficulty) {
     if (difficulty == RaceDifficulty.Expert) {

@@ -28,6 +28,7 @@ enum RacePauseMenuPage {
 let racePauseMenuOpen = false
 let racePauseMenuPage = RacePauseMenuPage.Options
 let racePauseMenuSelection = 0
+let racePauseSettingsPage = 0
 let racePauseSettingsSelection = 0
 let racePauseConfirmSelection = 1
 let racePauseRestartCountdownOnClose = false
@@ -40,8 +41,14 @@ function printCenteredOnFreeRoamMenu(
     color: number,
     font: image.Font
 ) {
-    let left = (target.width - text.length * font.charWidth) >> 1
-    target.print(text, left, top, color, font)
+    let fittedText = fitArcadeText(text, target.width - 8, font)
+    target.print(
+        fittedText,
+        centeredArcadeTextX(target.width, fittedText, font),
+        top,
+        color,
+        font
+    )
 }
 
 /** Draws one selectable row on the Free Roam menu. */
@@ -60,9 +67,10 @@ function drawFreeRoamMenuOption(
 
     target.fillRect(left, top, width, height, backgroundColor)
     target.drawRect(left, top, width, height, borderColor)
-    printCenteredOnFreeRoamMenu(
-        target,
-        text,
+    let fittedText = fitArcadeText(text, width - 6, image.font5)
+    target.print(
+        fittedText,
+        left + centeredArcadeTextX(width, fittedText, image.font5),
         top + 8,
         textColor,
         image.font5
@@ -301,9 +309,9 @@ function drawFreeRoamMapActivities(
 
         if (activityIsOnMap) {
             let sourceMapX = (physicalTileX * freeRoamTileSize +
-                freeRoamTileSize / 2) >> MinimapScale.Quarter
+                freeRoamTileSize / 2) >> 2
             let sourceMapY = (physicalTileY * freeRoamTileSize +
-                freeRoamTileSize / 2) >> MinimapScale.Quarter
+                freeRoamTileSize / 2) >> 2
             let markerX = mapLeft + Math.idiv(
                 sourceMapX * displayWidth,
                 freeRoamMenuMapImage.width
@@ -439,10 +447,9 @@ function drawFreeRoamMapScreen() {
 
 /** Captures the active physical tile window before the pause scene is pushed. */
 function captureFreeRoamMap() {
-    let generatedMap = minimap.minimap(MinimapScale.Quarter, 0, 0)
-    freeRoamMenuMapImage = minimap.getImage(generatedMap)
-    freeRoamMenuPlayerMapX = player.x >> MinimapScale.Quarter
-    freeRoamMenuPlayerMapY = player.y >> MinimapScale.Quarter
+    freeRoamMenuMapImage = createNativeMinimapImage(2)
+    freeRoamMenuPlayerMapX = player.x >> 2
+    freeRoamMenuPlayerMapY = player.y >> 2
     freeRoamMenuHomeDeltaX = freeRoamHomeWorldTileX() -
         freeRoamPlayerWorldTileX()
     freeRoamMenuHomeDeltaY = freeRoamHomeWorldTileY() -
@@ -565,9 +572,10 @@ function drawRacePauseOption(
 
     target.fillRect(left, top, width, height, backgroundColor)
     target.drawRect(left, top, width, height, borderColor)
-    printCenteredOnFreeRoamMenu(
-        target,
-        text,
+    let fittedText = fitArcadeText(text, width - 6, image.font5)
+    target.print(
+        fittedText,
+        left + centeredArcadeTextX(width, fittedText, image.font5),
         top + 5,
         textColor,
         image.font5
@@ -653,28 +661,58 @@ function drawRacePauseControls() {
 /** Draws pause-safe settings without nesting storytelling menus. */
 function drawRacePauseSettings() {
     let menuImage = createRacePausePanel("RACE SETTINGS")
-    let options = [
-        "Sound: " + racingSettingState(racingSoundEnabled),
-        "Camera Shake: " +
-            racingSettingState(racingCameraShakeEnabled),
-        "High Contrast: " +
-            racingSettingState(racingHighContrastHud),
-        "Driving FX: " +
-            racingSettingState(racingDrivingEffectsEnabled),
-        "Back"
-    ]
+    let options: string[] = []
+
+    if (racePauseSettingsPage == 0) {
+        options = [
+            "Sound: " + racingSettingState(racingSoundEnabled),
+            "Camera Shake: " +
+                racingSettingState(racingCameraShakeEnabled),
+            "More",
+            "Back"
+        ]
+    } else if (racePauseSettingsPage == 1) {
+        options = [
+            "High Contrast: " +
+                racingSettingState(racingHighContrastHud),
+            "Driving FX: " +
+                racingSettingState(racingDrivingEffectsEnabled),
+            "More",
+            "Back"
+        ]
+    } else if (racePauseSettingsPage == 2) {
+        options = [
+            "Difficulty: " +
+                drivingDifficultyPresetName(
+                    racingDrivingDifficultyPreset
+                ),
+            "Steering Assist: " +
+                racingSettingState(racingSteeringAssistEnabled),
+            "More",
+            "Back"
+        ]
+    } else {
+        options = [
+            "Brake Assist: " +
+                racingSettingState(racingBrakingAssistEnabled),
+            "Assist Guide",
+            "More",
+            "Back"
+        ]
+    }
 
     for (let index = 0; index < options.length; index++) {
         drawRacePauseOption(
             menuImage,
             options[index],
-            27 + index * 16,
+            30 + index * 18,
             racePauseSettingsSelection == index
         )
     }
     printCenteredOnFreeRoamMenu(
         menuImage,
-        "A:TOGGLE B:BACK",
+        "A:SELECT B:BACK  PAGE " +
+            (racePauseSettingsPage + 1) + "/4",
         110,
         6,
         image.font5
@@ -788,28 +826,53 @@ function selectRacePauseOption() {
     if (racePauseMenuPage == RacePauseMenuPage.Controls) {
         returnToRacePauseOptions()
     } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
-        if (racePauseSettingsSelection == 0) {
-            racingSoundEnabled = !racingSoundEnabled
-            saveRacingSettings()
-            drawRacePauseSettings()
-        } else if (racePauseSettingsSelection == 1) {
-            racingCameraShakeEnabled = !racingCameraShakeEnabled
-            saveRacingSettings()
-            drawRacePauseSettings()
-        } else if (racePauseSettingsSelection == 2) {
-            racingHighContrastHud = !racingHighContrastHud
-            saveRacingSettings()
-            drawRacePauseSettings()
+        if (racePauseSettingsSelection == 2) {
+            racePauseSettingsPage = (racePauseSettingsPage + 1) % 4
+            racePauseSettingsSelection = 0
         } else if (racePauseSettingsSelection == 3) {
-            racingDrivingEffectsEnabled = !racingDrivingEffectsEnabled
-            saveRacingSettings()
-            if (!racingDrivingEffectsEnabled) {
-                clearDrivingEffects()
-            }
-            drawRacePauseSettings()
-        } else {
             returnToRacePauseOptions()
+            return
+        } else if (racePauseSettingsPage == 0) {
+            if (racePauseSettingsSelection == 0) {
+                racingSoundEnabled = !racingSoundEnabled
+            } else {
+                racingCameraShakeEnabled = !racingCameraShakeEnabled
+            }
+            saveRacingSettings()
+        } else if (racePauseSettingsPage == 1) {
+            if (racePauseSettingsSelection == 0) {
+                racingHighContrastHud = !racingHighContrastHud
+            } else {
+                racingDrivingEffectsEnabled =
+                    !racingDrivingEffectsEnabled
+                if (!racingDrivingEffectsEnabled) {
+                    clearDrivingEffects()
+                }
+            }
+            saveRacingSettings()
+        } else if (racePauseSettingsPage == 2) {
+            if (racePauseSettingsSelection == 0) {
+                cycleDrivingDifficultyPreset()
+            } else {
+                racingSteeringAssistEnabled =
+                    !racingSteeringAssistEnabled
+                saveRacingSettings()
+            }
+        } else {
+            if (racePauseSettingsSelection == 0) {
+                racingBrakingAssistEnabled =
+                    !racingBrakingAssistEnabled
+                saveRacingSettings()
+            } else {
+                game.showLongText(
+                    "Steering assist strengthens only your requested turn. " +
+                        "Brake assist trims only excess corner speed. " +
+                        "Neither assist drives or stops the car for you.",
+                    DialogLayout.Full
+                )
+            }
         }
+        drawRacePauseSettings()
     } else if (racePauseMenuPage == RacePauseMenuPage.ConfirmRestart ||
         racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {
         if (racePauseConfirmSelection == 1) {
@@ -831,6 +894,7 @@ function selectRacePauseOption() {
         drawRacePauseControls()
     } else if (racePauseMenuSelection == 3) {
         racePauseMenuPage = RacePauseMenuPage.Settings
+        racePauseSettingsPage = 0
         racePauseSettingsSelection = 0
         drawRacePauseSettings()
     } else {
@@ -847,7 +911,7 @@ function bindRacePauseMenuControls() {
             racePauseMenuSelection = (racePauseMenuSelection + 4) % 5
         } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
             racePauseSettingsSelection =
-                (racePauseSettingsSelection + 4) % 5
+                (racePauseSettingsSelection + 3) % 4
         } else if (racePauseMenuPage ==
             RacePauseMenuPage.ConfirmRestart ||
             racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {
@@ -861,7 +925,7 @@ function bindRacePauseMenuControls() {
             racePauseMenuSelection = (racePauseMenuSelection + 1) % 5
         } else if (racePauseMenuPage == RacePauseMenuPage.Settings) {
             racePauseSettingsSelection =
-                (racePauseSettingsSelection + 1) % 5
+                (racePauseSettingsSelection + 1) % 4
         } else if (racePauseMenuPage ==
             RacePauseMenuPage.ConfirmRestart ||
             racePauseMenuPage == RacePauseMenuPage.ConfirmGarage) {

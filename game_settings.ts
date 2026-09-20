@@ -1,8 +1,8 @@
 // Product identity, player-facing settings, and accessibility helpers
 
-const racingGameVersion = "0.9.0-polish"
+const racingGameVersion = "1.0.0-polish"
 const racingSettingsKey = "makecode-racing-settings"
-const racingSettingsVersion = 1
+const racingSettingsVersion = 2
 
 let racingSoundEnabled = true
 let racingCameraShakeEnabled = true
@@ -12,8 +12,14 @@ let racingDrivingEffectsEnabled = true
 /** Loads independent presentation settings without coupling them to progress. */
 function loadRacingSettings() {
     let savedSettings = settings.readNumberArray(racingSettingsKey)
-    if (!savedSettings || savedSettings.length < 4 ||
-        savedSettings[0] != racingSettingsVersion) {
+    if (!savedSettings || savedSettings.length < 4) {
+        return
+    }
+
+    // Version 1 did not contain driving assists. Keep loading its established
+    // fields and preserve its unassisted handling until the player opts in.
+    let savedVersion = savedSettings[0]
+    if (savedVersion < 1 || savedVersion > racingSettingsVersion) {
         return
     }
 
@@ -28,6 +34,18 @@ function loadRacingSettings() {
     if (savedSettings.length >= 6) {
         racingDrivingEffectsEnabled = savedSettings[5] != 0
     }
+    if (savedVersion >= 2 && savedSettings.length >= 9) {
+        racingDrivingDifficultyPreset = loadWholeNumber(
+            savedSettings[6],
+            DrivingDifficultyPreset.Relaxed,
+            DrivingDifficultyPreset.Precision
+        ) as DrivingDifficultyPreset
+        racingSteeringAssistEnabled = savedSettings[7] != 0
+        racingBrakingAssistEnabled = savedSettings[8] != 0
+    } else if (savedVersion == 1) {
+        racingSteeringAssistEnabled = false
+        racingBrakingAssistEnabled = false
+    }
 }
 
 function saveRacingSettings() {
@@ -37,7 +55,10 @@ function saveRacingSettings() {
         racingCameraShakeEnabled ? 1 : 0,
         racingHighContrastHud ? 1 : 0,
         selectedFreeRoamAbility,
-        racingDrivingEffectsEnabled ? 1 : 0
+        racingDrivingEffectsEnabled ? 1 : 0,
+        racingDrivingDifficultyPreset,
+        racingSteeringAssistEnabled ? 1 : 0,
+        racingBrakingAssistEnabled ? 1 : 0
     ])
 }
 
@@ -75,6 +96,53 @@ function toggleRacingDrivingEffects() {
     }
 }
 
+/** Four-slot controller menu for assists that never alter event difficulty. */
+function showRacingDrivingAssistMenu() {
+    let leaveAssists = false
+    let assistPage = 0
+
+    while (!leaveAssists) {
+        let presetChoice = "Driving Difficulty: " +
+            drivingDifficultyPresetName(racingDrivingDifficultyPreset)
+        let steeringChoice = "Steering Assist: " +
+            racingSettingState(racingSteeringAssistEnabled)
+        let brakingChoice = "Brake Assist: " +
+            racingSettingState(racingBrakingAssistEnabled)
+        let guideChoice = "How Assists Work"
+
+        if (assistPage == 0) {
+            story.showPlayerChoices(
+                presetChoice, steeringChoice, "More", "Back"
+            )
+        } else {
+            story.showPlayerChoices(
+                brakingChoice, guideChoice, "More", "Back"
+            )
+        }
+
+        if (story.checkLastAnswer(presetChoice)) {
+            cycleDrivingDifficultyPreset()
+        } else if (story.checkLastAnswer(steeringChoice)) {
+            racingSteeringAssistEnabled = !racingSteeringAssistEnabled
+            saveRacingSettings()
+        } else if (story.checkLastAnswer(brakingChoice)) {
+            racingBrakingAssistEnabled = !racingBrakingAssistEnabled
+            saveRacingSettings()
+        } else if (story.checkLastAnswer(guideChoice)) {
+            game.showLongText(
+                "STEERING ASSIST adds a small amount of response only while you steer. " +
+                    "BRAKE ASSIST gently trims speed in hard, fast corners and never stops the car. " +
+                    "Driving Difficulty changes assist strength, not race opponents or rewards.",
+                DialogLayout.Full
+            )
+        } else if (story.checkLastAnswer("More")) {
+            assistPage = (assistPage + 1) % 2
+        } else {
+            leaveAssists = true
+        }
+    }
+}
+
 /** Keeps readability and sensory controls in a dedicated four-slot submenu. */
 function showRacingAccessibilityMenu() {
     let leaveAccessibility = false
@@ -89,14 +157,21 @@ function showRacingAccessibilityMenu() {
             racingSettingState(racingDrivingEffectsEnabled)
         let cuesChoice = "Sound Cues: " +
             racingSettingState(racingSoundEnabled)
+        let assistsChoice = "Driving Assists"
+        let presetChoice = "Difficulty: " +
+            drivingDifficultyPresetName(racingDrivingDifficultyPreset)
 
         if (accessibilityPage == 0) {
             story.showPlayerChoices(
                 contrastChoice, motionChoice, "More", "Back"
             )
-        } else {
+        } else if (accessibilityPage == 1) {
             story.showPlayerChoices(
                 effectsChoice, cuesChoice, "More", "Back"
+            )
+        } else {
+            story.showPlayerChoices(
+                assistsChoice, presetChoice, "More", "Back"
             )
         }
 
@@ -111,8 +186,12 @@ function showRacingAccessibilityMenu() {
         } else if (story.checkLastAnswer(cuesChoice)) {
             racingSoundEnabled = !racingSoundEnabled
             saveRacingSettings()
+        } else if (story.checkLastAnswer(assistsChoice)) {
+            showRacingDrivingAssistMenu()
+        } else if (story.checkLastAnswer(presetChoice)) {
+            cycleDrivingDifficultyPreset()
         } else if (story.checkLastAnswer("More")) {
-            accessibilityPage = (accessibilityPage + 1) % 2
+            accessibilityPage = (accessibilityPage + 1) % 3
         } else {
             leaveAccessibility = true
         }
@@ -128,8 +207,7 @@ function showRacingSettingsMenu() {
         let soundChoice = "Sound: " + racingSettingState(racingSoundEnabled)
         let shakeChoice = "Camera Shake: " +
             racingSettingState(racingCameraShakeEnabled)
-        let effectsChoice = "Driving FX: " +
-            racingSettingState(racingDrivingEffectsEnabled)
+        let assistsChoice = "Driving Assists"
 
         if (settingsPage == 0) {
             story.showPlayerChoices(
@@ -137,7 +215,7 @@ function showRacingSettingsMenu() {
             )
         } else {
             story.showPlayerChoices(
-                shakeChoice, effectsChoice, "More", "Back"
+                shakeChoice, assistsChoice, "More", "Back"
             )
         }
 
@@ -148,8 +226,8 @@ function showRacingSettingsMenu() {
             showRacingAccessibilityMenu()
         } else if (story.checkLastAnswer(shakeChoice)) {
             toggleRacingCameraShake()
-        } else if (story.checkLastAnswer(effectsChoice)) {
-            toggleRacingDrivingEffects()
+        } else if (story.checkLastAnswer(assistsChoice)) {
+            showRacingDrivingAssistMenu()
         } else if (story.checkLastAnswer("More")) {
             settingsPage = (settingsPage + 1) % 2
         } else {

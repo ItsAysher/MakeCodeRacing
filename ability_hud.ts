@@ -125,13 +125,14 @@ function showAbilityToast(message: string, color: number) {
     if (abilityToastSprite) {
         abilityToastSprite.destroy()
     }
+    message = fitArcadeText(message, 146, image.font5)
     let width = Math.min(154, message.length * image.font5.charWidth + 8)
     let toast = image.create(width, 12)
     toast.fill(15)
     toast.drawRect(0, 0, width, 12, color)
     toast.print(
         message,
-        (width - message.length * image.font5.charWidth) >> 1,
+        centeredArcadeTextX(width, message, image.font5),
         3,
         color,
         image.font5

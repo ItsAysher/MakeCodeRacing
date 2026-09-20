@@ -1,6 +1,7 @@
 // Race lifecycle, lap tracking, and results
 
 let activeRaceDefinition: RaceDefinition = null
+let activeRaceCheckpoints: number[][] = []
 let checkpointArmed = false
 let raceLap = 0
 let raceFinishedCompetitorCount = 0
@@ -83,7 +84,16 @@ function runRaceStartCountdown(sessionId: number) {
 function startNextRace() {
     raceSessionId += 1
     let startingSessionId = raceSessionId
+    // The authored championship remains the canonical forward series even if
+    // the player last selected a reverse single event in the Garage.
+    if (championshipActive) {
+        selectedRaceLayout = RaceLayout.Forward
+    }
     activeRaceDefinition = raceDefinitionForDifficulty(selectedRace)
+    activeRaceCheckpoints = raceCheckpointsForLayout(
+        activeRaceDefinition,
+        selectedRaceLayout
+    )
     drivingSessionState = DrivingSessionState.RaceStarting
     checkpointArmed = false
     raceLap = 0
@@ -94,7 +104,7 @@ function startNextRace() {
     resetRaceMinimapCache()
     scene.setBackgroundColor(7)
 
-    createPlayer(CarImageDirection.Right)
+    createPlayer(raceStartDirection(selectedRaceLayout))
     tiles.placeOnTile(
         player,
         tiles.getTileLocation(
@@ -111,7 +121,8 @@ function startNextRace() {
     info.showScore(false)
     info.showCountdown(false)
     game.splash(
-        activeRaceDefinition.name + " RACE",
+        activeRaceDefinition.name + " " +
+            raceLayoutLabel(selectedRaceLayout) + " RACE",
         activeRaceDefinition.lapTarget + " LAP" +
             (activeRaceDefinition.lapTarget == 1 ? "" : "S") +
             " | Prize $" + activeRaceDefinition.prize
@@ -158,7 +169,7 @@ function raceResultDescription(
         "/" + playerMaximumDurability +
         (completedRace ?
             "\nMedal: " + raceMedalForTime(
-                selectedRaceIndex(),
+                selectedRace as number,
                 currentRaceTimeMilliseconds()
             ) : "") +
         currentRaceRecordHighlights() +
@@ -194,6 +205,10 @@ function completeCurrentRace(completedRace: boolean) {
     let position = completedRace ?
         raceFinishedCompetitorCount + 1 : racePositionForPlayer()
     let won = completedRace && position == 1
+    let championshipRoundFinished = championshipActive
+    if (championshipRoundFinished) {
+        recordChampionshipRound(position, completedRace)
+    }
     stopCurrentRaceTiming(position, completedRace)
     let reward = calculateCurrentRaceReward(
         won,
@@ -223,14 +238,26 @@ function completeCurrentRace(completedRace: boolean) {
                 DialogLayout.Full
             )
         }
-        story.showPlayerChoices("Rematch", "Garage")
-        let rematch = story.checkLastAnswer("Rematch")
-        leaveCurrentDrivingSession()
-        if (rematch) {
-            startNextRace()
+        if (championshipRoundFinished) {
+            showChampionshipRoundStandings()
+            let continueSeries = advanceChampionshipSeries()
+            leaveCurrentDrivingSession()
+            if (continueSeries) {
+                startNextRace()
+            } else {
+                showGarage()
+                startSelectedDrivingMode()
+            }
         } else {
-            showGarage()
-            startSelectedDrivingMode()
+            story.showPlayerChoices("Rematch", "Garage")
+            let rematch = story.checkLastAnswer("Rematch")
+            leaveCurrentDrivingSession()
+            if (rematch) {
+                startNextRace()
+            } else {
+                showGarage()
+                startSelectedDrivingMode()
+            }
         }
     })
 }
@@ -250,6 +277,7 @@ function stopCurrentRace() {
     checkpointArmed = false
     raceLap = 0
     activeRaceDefinition = null
+    activeRaceCheckpoints = []
 }
 
 // Arms the player to complete a lap after crossing the checkpoint.

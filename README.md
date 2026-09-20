@@ -25,6 +25,9 @@ Intermediate races and all Free Roam themes unlock at three wins. Expert races u
 ## Product Features
 
 - A controller-native start menu, Garage, event briefings, records screen, settings, and in-game help.
+- Forward and reverse layouts for every circuit, with independent records and layout-aware grids, routes, briefings, and rivals.
+- A three-round Beginner-to-Expert championship with stable opponents, 10/7/5/3/1 points, DNF classification, standings, and a $1,000 champion bonus.
+- Compact pre-race field cards that identify the exact named rival field using its deterministic paint colors.
 - A staged grid countdown, ordered checkpoint validation, wrong-way feedback, live place, lap timing, race timing, and durability HUDs.
 - Deterministic named rivals with per-driver pace, steering, cornering, recovery, collision avoidance, and true finish order.
 - Results that show finish status, place, time, fastest lap, medal, new records, and an itemized reward breakdown.
@@ -33,7 +36,7 @@ Intermediate races and all Free Roam themes unlock at three wins. Expert races u
 - Infinite seed-stable Forest, Highway, and Cave worlds built around authored home areas, with a streamed map, home guidance, and discovered-activity markers.
 - Three mastery paths: defeat Forest rivals for Boost, complete Highway loops for Drift, and return Cave racer statues for Blink.
 - MakeCode-native mentor cars, stone racers, landmarks, ability icons, HUD art, driving effects, and accessibility-aware presentation.
-- Player options for sound, camera shake, high-contrast HUD colors, and driving effects. A dedicated Accessibility submenu exposes the sensory/readability controls, and presentation settings are stored independently from career progress.
+- Player options for sound, camera shake, high-contrast HUD colors, driving effects, handling presets, steering assist, and brake assist. Dedicated paged Settings, Accessibility, and Driving Assists menus expose these controls without changing opponent difficulty or rewards.
 - Four-slot Garage menus keep `More` in the third slot and `Back` in the fourth. The top-level Garage keeps `Drive` in the fourth slot on every page so Race and Free Roam are always reachable.
 
 ## Controls
@@ -137,6 +140,14 @@ Owns both controller-native driving menus. In Free Roam it offers Display Map, a
 
 Defines the product version and persistent presentation options for sound, camera shake, high-contrast HUD colors, driving effects, and selected ability. Its paged Settings and Accessibility menus keep navigation actions in predictable slots. Settings use a separate versioned record so toggles never rewrite career progress.
 
+### `driving_assists.ts`
+
+Defines Relaxed, Balanced, and Precision handling presets plus optional steering and brake assists. Assists respond only to active player input and hard, fast cornering; they never steer a stationary car, choose a route, alter rivals, or change rewards.
+
+### `championship.ts`
+
+Owns the three-event championship state, stable rival roster, position-based points, DNF handling, sorted standings, forward-only event sequence, final trophy presentation, and champion bonus. Opening and backing out of another mode menu preserves an active series; confirming another event abandons it deliberately.
+
 ### `game_flow.ts`
 
 Defines the selected driving mode and the single authoritative driving-session state. It launches Race or Free Roam and performs shared player, camera, and tilemap cleanup when a session ends.
@@ -151,7 +162,7 @@ Contains shared Garage state, background selection, strict four-slot paginated m
 
 ### `garage_mode_selection.ts`
 
-Handles Beginner, Intermediate, Expert, and Free Roam selection. Circuit labels expose earned medals, and a confirmation briefing shows laps, rivals, prize, time limit, personal bests, and medal targets before launch. The menu also enforces the three- and seven-win milestones.
+Handles Beginner, Intermediate, Expert, Championship, and Free Roam selection. Circuit labels expose layout-specific medals, and a confirmation briefing shows the active layout, laps, rivals, prize, time limit, personal bests, and medal targets before launch. The menu also enforces the three- and seven-win milestones.
 
 ### `garage_paint.ts`
 
@@ -167,7 +178,7 @@ Loads settings and career progress, protects incompatible saves, welcomes or nam
 
 ### `minimap.ts`
 
-Owns the race minimap HUD. It caches the full static track image once per race, reuses a fixed viewport image, redraws only when the player changes minimap position or appearance, and releases the large track cache when the race ends.
+Owns the native tilemap renderer and race minimap HUD. It caches the full static track image once per race, reuses a fixed viewport image, redraws only when the player changes minimap position or appearance, and releases the large track cache when the race ends. Free Roam reuses the same renderer for its map screen.
 
 ### `player_health.ts`
 
@@ -207,7 +218,15 @@ Reuses a fixed image-backed HUD for lap, place, elapsed time, last lap, banners,
 
 ### `race_definitions.ts`
 
-Stores the complete authored configuration for each difficulty: map, name, player and AI spawns, lap target, prize, timer, opponent count and speed, body tier, paint source colors, and AI route.
+Stores the complete authored configuration for each difficulty: map, name, player and AI spawns, lap target, prize, timer, opponent count and speed, body tier, paint source colors, AI route, and forward/reverse layout transforms.
+
+### `rival_cards.ts`
+
+Builds compact MakeCode-native pre-race cards from the active event definition, layout, named rival profiles, and deterministic paint colors. Text is fitted to fixed cells so all three field sizes remain readable.
+
+### `ui_text.ts`
+
+Provides allocation-light text fitting and fixed-font centering used by HUDs, field cards, standings, and other constrained 160x120 layouts.
 
 Current race settings are:
 
@@ -231,13 +250,9 @@ Defines the acceleration, turning, and wall-impact sound effects used by the pla
 
 ## MakeCode Dependencies
 
-The project uses the following MakeCode Arcade extensions:
+The project uses Arcade Storytelling for controller menus and cutscenes. The minimap and durability bar are now project-owned native image/sprite implementations; removing their general-purpose extensions recovered enough native code space for the championship, reverse layouts, assists, and field cards.
 
-- Arcade Storytelling for menus and cutscenes.
-- Arcade Minimap for the race minimap.
-- Status Bar for the durability HUD.
-
-The project deliberately uses native `image.print`, controller input, sprite HUDs, and a delta-time race clock instead of adding menu, font, timer, animation, settings, or sprite-data extensions. This keeps memory use and hardware behavior predictable.
+The project deliberately uses native `image.print`, controller input, sprite HUDs, and a delta-time race clock instead of adding font, timer, animation, settings, minimap, status-bar, or sprite-data extensions. This keeps memory use and hardware behavior predictable.
 
 The full game exceeds the flash budget of lower-capacity nRF52833 and SAMD51 boards. `mkc.json` therefore defaults native CLI builds to RP2040; the nRF52840 (`n4`) variant also builds successfully. The browser simulator and JavaScript build remain unrestricted.
 
@@ -263,8 +278,10 @@ Run these checks from the project root after code or asset changes:
 node tools/validate_assets.mjs
 node tools/regenerate_image_bindings.mjs --check
 node tools/compile_makecode.mjs
+./tools/validate-release.ps1 -SkipBuild
+node tools/smoke-simulator.mjs
 # Cached official CLI; defaults to RP2040 through mkc.json
 makecode build --native --always-built
 ```
 
-The asset validator is read-only. It verifies JSON structure, unique IDs and display names, canonical base64, F4 headers, dimensions and aligned payload lengths, then decodes every image and compares it pixel-for-pixel with both aliases in the MakeCode-generated `images.g.ts` factory. The binding check independently proves the generated file exactly matches MakeCode's current emitter output. The final command type-checks and compiles the complete project through the locally cached MakeCode toolchain.
+The asset validator is read-only. It verifies JSON structure, unique IDs and display names, canonical base64, F4 headers, dimensions and aligned payload lengths, then decodes every image and compares it pixel-for-pixel with both aliases in the MakeCode-generated `images.g.ts` factory. The binding check independently proves the generated file exactly matches MakeCode's current emitter output. The release validator checks package membership, JRES encoding, four-choice Story menus, and stable Garage slots. The zero-install smoke runner starts a temporary local simulator and headless browser, enters a new profile, and verifies 16 controller-driven checkpoints through Garage, Settings, Accessibility, Races, the Reverse-layout toggle, and the Beginner race launch against a reviewed canvas baseline. The final command compiles the complete project for native Arcade hardware.

@@ -8,9 +8,11 @@ interface RaceRewardSummary {
     total: number
 }
 
-let bestRaceTimeMilliseconds = [0, 0, 0]
-let bestLapTimeMilliseconds = [0, 0, 0]
-let bestRaceFinish = [0, 0, 0]
+// Forward records retain indices 0-2 for save compatibility. Reverse records
+// use 3-5 and are persisted under a separate versioned settings key.
+let bestRaceTimeMilliseconds = [0, 0, 0, 0, 0, 0]
+let bestLapTimeMilliseconds = [0, 0, 0, 0, 0, 0]
+let bestRaceFinish = [0, 0, 0, 0, 0, 0]
 
 let currentRaceElapsedMilliseconds = 0
 let currentLapElapsedMilliseconds = 0
@@ -37,8 +39,16 @@ let cachedRaceFinishRouteOffset = 0
 let raceSilverTargetMilliseconds = [33000, 80000, 180000]
 let raceGoldTargetMilliseconds = [26000, 65000, 150000]
 
+function raceRecordIndex(
+    difficulty: RaceDifficulty,
+    layout: RaceLayout
+) {
+    return difficulty as number +
+        (layout == RaceLayout.Reverse ? 3 : 0)
+}
+
 function selectedRaceIndex() {
-    return selectedRace as number
+    return raceRecordIndex(selectedRace, selectedRaceLayout)
 }
 
 function formatRaceTime(milliseconds: number) {
@@ -90,12 +100,11 @@ function prepareRaceRouteProgress() {
     playerRaceWrongWay = false
     playerRaceInvalidFinishWarningAt = 0
 
-    if (!activeRaceDefinition ||
-        activeRaceDefinition.aiCheckpoints.length < 2) {
+    if (!activeRaceDefinition || activeRaceCheckpoints.length < 2) {
         return
     }
 
-    let route = activeRaceDefinition.aiCheckpoints
+    let route = activeRaceCheckpoints
     for (let index = 0; index < route.length; index++) {
         let nextIndex = (index + 1) % route.length
         let dx = (route[nextIndex][0] - route[index][0]) * 16
@@ -120,7 +129,7 @@ function playerRaceRouteIsCompleteForLap() {
     if (!activeRaceDefinition) {
         return false
     }
-    let gateCount = activeRaceDefinition.aiCheckpoints.length
+    let gateCount = activeRaceCheckpoints.length
     return gateCount > 0 && playerRaceRouteGatesPassed >=
         gateCount * (raceLap + 1)
 }
@@ -135,18 +144,17 @@ function showInvalidRaceFinishWarning() {
 }
 
 function raceRouteGatePixelX(gateIndex: number) {
-    return activeRaceDefinition.aiCheckpoints[gateIndex][0] * 16 + 8
+    return activeRaceCheckpoints[gateIndex][0] * 16 + 8
 }
 
 function raceRouteGatePixelY(gateIndex: number) {
-    return activeRaceDefinition.aiCheckpoints[gateIndex][1] * 16 + 8
+    return activeRaceCheckpoints[gateIndex][1] * 16 + 8
 }
 
 /** Advances generous invisible progress gates and diagnoses sustained wrong-way driving. */
 function updatePlayerRaceRouteProgress(deltaTime: number) {
     if (drivingSessionState != DrivingSessionState.Race || !player ||
-        !activeRaceDefinition ||
-        activeRaceDefinition.aiCheckpoints.length == 0) {
+        !activeRaceDefinition || activeRaceCheckpoints.length == 0) {
         return
     }
 
@@ -158,7 +166,7 @@ function updatePlayerRaceRouteProgress(deltaTime: number) {
     if (distance <= 40) {
         playerRaceRouteGatesPassed += 1
         playerRaceRouteGateIndex = (playerRaceRouteGateIndex + 1) %
-            activeRaceDefinition.aiCheckpoints.length
+            activeRaceCheckpoints.length
         playerRaceWrongWayMilliseconds = 0
         playerRaceWrongWay = false
         return
@@ -182,11 +190,11 @@ function routeGateFraction(
     targetGateIndex: number
 ) {
     if (!racer || !activeRaceDefinition ||
-        activeRaceDefinition.aiCheckpoints.length == 0) {
+        activeRaceCheckpoints.length == 0) {
         return 0
     }
 
-    let gateCount = activeRaceDefinition.aiCheckpoints.length
+    let gateCount = activeRaceCheckpoints.length
     let previousGateIndex = (targetGateIndex + gateCount - 1) % gateCount
     let startX = raceRouteGatePixelX(previousGateIndex)
     let startY = raceRouteGatePixelY(previousGateIndex)
@@ -210,7 +218,7 @@ function rawRaceRouteProgressAt(x: number, y: number) {
         return 0
     }
 
-    let route = activeRaceDefinition.aiCheckpoints
+    let route = activeRaceCheckpoints
     let bestDistanceSquared = 1000000000
     let bestProgress = 0
 
@@ -275,7 +283,7 @@ function adjustedRaceRouteProgress(
 /** Returns the player's live place among every active circuit racer. */
 function racePositionForPlayer() {
     if (!player || !activeRaceDefinition ||
-        activeRaceDefinition.aiCheckpoints.length == 0) {
+        activeRaceCheckpoints.length == 0) {
         return 1
     }
 
@@ -417,10 +425,30 @@ function loadRaceRecordProgress(
     }
 }
 
+function loadReverseRaceRecordProgress(
+    raceTimes: number[],
+    lapTimes: number[],
+    finishes: number[]
+) {
+    for (let index = 0; index < 3; index++) {
+        let recordIndex = index + 3
+        bestRaceTimeMilliseconds[recordIndex] = loadWholeNumber(
+            raceTimes[index], 0, 3600000
+        )
+        bestLapTimeMilliseconds[recordIndex] = loadWholeNumber(
+            lapTimes[index], 0, 3600000
+        )
+        bestRaceFinish[recordIndex] = loadWholeNumber(
+            finishes[index], 0, 5
+        )
+    }
+}
+
 function resetRaceRecordProgress() {
-    bestRaceTimeMilliseconds = [0, 0, 0]
-    bestLapTimeMilliseconds = [0, 0, 0]
-    bestRaceFinish = [0, 0, 0]
+    bestRaceTimeMilliseconds = [0, 0, 0, 0, 0, 0]
+    bestLapTimeMilliseconds = [0, 0, 0, 0, 0, 0]
+    bestRaceFinish = [0, 0, 0, 0, 0, 0]
+    selectedRaceLayout = RaceLayout.Forward
     currentRaceTimingActive = false
     currentRaceElapsedMilliseconds = 0
     currentRaceLastLapMilliseconds = 0
@@ -469,17 +497,31 @@ function currentRaceRecordHighlights() {
 function showRaceRecords() {
     let names = ["BEGINNER", "INTERMEDIATE", "EXPERT"]
     let recordText = "PERSONAL RECORDS"
-    for (let index = 0; index < 3; index++) {
-        recordText += "\n\n" + names[index] +
-            " [" + raceMedalShortForTime(
-                index,
-                bestRaceTimeMilliseconds[index]
-            ) + "]" +
-            "\nRace: " + raceRecordValue(bestRaceTimeMilliseconds[index]) +
-            "  Lap: " + raceRecordValue(bestLapTimeMilliseconds[index]) +
-            "\nBest finish: " +
-            (bestRaceFinish[index] > 0 ?
-                raceOrdinal(bestRaceFinish[index]) : "--")
+    for (let layoutIndex = 0; layoutIndex < 2; layoutIndex++) {
+        let layout = layoutIndex as RaceLayout
+        recordText += "\n\n== " + raceLayoutLabel(layout) + " =="
+        for (let difficultyIndex = 0;
+            difficultyIndex < 3;
+            difficultyIndex++) {
+            let recordIndex = raceRecordIndex(
+                difficultyIndex as RaceDifficulty,
+                layout
+            )
+            recordText += "\n\n" + names[difficultyIndex] +
+                " [" + raceMedalShortForTime(
+                    difficultyIndex,
+                    bestRaceTimeMilliseconds[recordIndex]
+                ) + "]" +
+                "\nRace: " + raceRecordValue(
+                    bestRaceTimeMilliseconds[recordIndex]
+                ) +
+                "  Lap: " + raceRecordValue(
+                    bestLapTimeMilliseconds[recordIndex]
+                ) +
+                "\nBest finish: " +
+                (bestRaceFinish[recordIndex] > 0 ?
+                    raceOrdinal(bestRaceFinish[recordIndex]) : "--")
+        }
     }
     game.showLongText(recordText, DialogLayout.Full)
 }

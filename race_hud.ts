@@ -104,13 +104,14 @@ function showRaceBanner(message: string, color: number) {
     if (raceBannerSprite) {
         raceBannerSprite.destroy()
     }
+    message = fitArcadeText(message, 138, image.font8)
     let width = Math.min(150, message.length * image.font8.charWidth + 12)
     let banner = image.create(width, 16)
     banner.fill(15)
     banner.drawRect(0, 0, width, 16, color)
     banner.print(
         message,
-        (width - message.length * image.font8.charWidth) >> 1,
+        centeredArcadeTextX(width, message, image.font8),
         4,
         color,
         image.font8

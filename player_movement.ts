@@ -169,6 +169,7 @@ function updatePlayerMovement() {
     // Blend the current heading toward the requested heading. Acceleration
     // upgrades also improve response, while speed still produces wider turns.
     let turnRate = playerTurnRateAtSpeed(speedRatio)
+    turnRate *= drivingSteeringAssistMultiplier(speedRatio, alignment)
     let turnBlend = Math.min(1, turnRate * deltaTime)
     directionX = directionX * (1 - turnBlend) + inputX * turnBlend
     directionY = directionY * (1 - turnBlend) + inputY * turnBlend
@@ -186,6 +187,12 @@ function updatePlayerMovement() {
     currentSpeed = Math.min(
         playerMaximumSpeed,
         Math.max(0, currentSpeed + (playerDriveAcceleration - corneringDrag) * deltaTime)
+    )
+    currentSpeed = applyDrivingBrakingAssist(
+        currentSpeed,
+        speedRatio,
+        turnSeverity,
+        deltaTime
     )
 
     player.vx = directionX * currentSpeed

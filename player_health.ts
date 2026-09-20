@@ -1,10 +1,6 @@
 // Player durability, health display, and damaging collisions
 
-namespace StatusBarKind {
-    export let Durability = StatusBarKind.create()
-}
-
-let playerHealthBar: StatusBarSprite = null
+let playerHealthBar: Sprite = null
 let playerRaceHealth = 0
 let playerCarWrecked = false
 let lastPlayerWallImpactTime = 0
@@ -19,10 +15,10 @@ function createPlayerHealthBar() {
         playerHealthBar.destroy()
     }
 
-    playerHealthBar = statusbars.create(44, 6, StatusBarKind.Durability)
-    playerHealthBar.max = playerMaximumDurability
-    playerHealthBar.value = playerRaceHealth
-    refreshPlayerHealthBarColors()
+    playerHealthBar = sprites.create(
+        playerHealthBarImage(),
+        SpriteKind.RaceHud
+    )
     playerHealthBar.setFlag(SpriteFlag.RelativeToCamera, true)
     playerHealthBar.setFlag(SpriteFlag.Ghost, true)
     playerHealthBar.z = 110
@@ -30,16 +26,26 @@ function createPlayerHealthBar() {
     playerHealthBar.top = 11
 }
 
+/** Draws a fixed-allocation durability meter without a general HUD extension. */
+function playerHealthBarImage() {
+    let bar = image.create(44, 6)
+    let fillColor = racingHighContrastHud ? 1 : 7
+    let fillWidth = playerMaximumDurability > 0 ? Math.floor(
+        42 * playerRaceHealth / playerMaximumDurability
+    ) : 0
+    bar.fill(15)
+    bar.fillRect(1, 1, 42, 4, 2)
+    if (fillWidth > 0) {
+        bar.fillRect(1, 1, fillWidth, 4, fillColor)
+    }
+    return bar
+}
+
 function refreshPlayerHealthBarColors() {
     if (!playerHealthBar) {
         return
     }
-    playerHealthBar.setColor(
-        racingHighContrastHud ? 1 : 7,
-        2,
-        racingHighContrastHud ? 5 : 4
-    )
-    playerHealthBar.setBarBorder(1, 15)
+    playerHealthBar.setImage(playerHealthBarImage())
 }
 
 /**
@@ -73,7 +79,7 @@ function damagePlayerCar(amount: number) {
     }
 
     playerRaceHealth = Math.max(0, playerRaceHealth - amount)
-    playerHealthBar.value = playerRaceHealth
+    playerHealthBar.setImage(playerHealthBarImage())
 
     if (playerRaceHealth <= 0) {
         playerCarWrecked = true

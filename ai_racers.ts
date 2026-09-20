@@ -22,26 +22,31 @@ let aiSteeringProfiles = [18, 16, 22, 20]
 let aiCornerSpeedProfiles = [0.72, 0.68, 0.78, 0.74]
 let aiRecoveryProfiles = [3400, 3000, 2400, 2800]
 
-function aiRacerProfile(index: number) {
+/** Returns the stable profile used by both the Garage card and live race. */
+function aiRacerProfileForDifficulty(
+    difficulty: RaceDifficulty,
+    index: number
+) {
     let names = beginnerAIRacerNames
-    if (selectedRace == RaceDifficulty.Intermediate) {
+    if (difficulty == RaceDifficulty.Intermediate) {
         names = intermediateAIRacerNames
-    } else if (selectedRace == RaceDifficulty.Expert) {
+    } else if (difficulty == RaceDifficulty.Expert) {
         names = expertAIRacerNames
     }
 
-    let speedRange = activeRaceDefinition.aiMaximumSpeed -
-        activeRaceDefinition.aiMinimumSpeed
-    let evenlySpacedSpeed = activeRaceDefinition.aiMinimumSpeed +
-        speedRange * (index + 1) / (activeRaceDefinition.aiCount + 1)
+    let definition = raceDefinitionForDifficulty(difficulty)
+    let speedRange = definition.aiMaximumSpeed - definition.aiMinimumSpeed
+    let evenlySpacedSpeed = definition.aiMinimumSpeed +
+        speedRange * (index + 1) / (definition.aiCount + 1)
     let profile: AIRacerProfile = {
-        name: names[index],
+        name: championshipActive ?
+            championshipRivalName(index) : names[index],
         speed: Math.min(
-            activeRaceDefinition.aiMaximumSpeed,
+            definition.aiMaximumSpeed,
             evenlySpacedSpeed * aiSpeedProfiles[index]
         ),
         acceleration: aiAccelerationProfiles[index] +
-            selectedRaceIndex() * 10,
+            difficulty * 10,
         steering: aiSteeringProfiles[index],
         cornerSpeed: aiCornerSpeedProfiles[index],
         recoveryMilliseconds: aiRecoveryProfiles[index]
@@ -49,26 +54,39 @@ function aiRacerProfile(index: number) {
     return profile
 }
 
-/** Creates one opponent's directional images with a randomized paint scheme. */
-function createAIRacerImages(racerIndex: number) {
-    let sourceImages = allCarBodyImages[activeRaceDefinition.aiBodyTier]
-    let racerImages: Image[] = []
+function aiRacerProfile(index: number) {
+    return aiRacerProfileForDifficulty(selectedRace, index)
+}
+
+/** Returns the deterministic primary and accent paint for one rival. */
+function aiRacerPaintColors(difficulty: RaceDifficulty, racerIndex: number) {
     let colors = [3, 4, 5, 7, 9, 11, 13, 14]
-    let firstColorIndex = (selectedRaceIndex() * 3 + racerIndex * 2) %
-        colors.length
+    let firstColorIndex = (difficulty * 3 + racerIndex * 2) % colors.length
     let secondColorIndex = (firstColorIndex + 3 + racerIndex) % colors.length
+    return [colors[firstColorIndex], colors[secondColorIndex]]
+}
+
+/** Creates one opponent's directional images with a randomized paint scheme. */
+function createAIRacerImagesForDifficulty(
+    difficulty: RaceDifficulty,
+    racerIndex: number
+) {
+    let definition = raceDefinitionForDifficulty(difficulty)
+    let sourceImages = allCarBodyImages[definition.aiBodyTier]
+    let racerImages: Image[] = []
+    let paintColors = aiRacerPaintColors(difficulty, racerIndex)
 
     for (let source of sourceImages) {
         let racerImage = source.clone()
         racerImage.replace(
-            activeRaceDefinition.aiPrimarySourceColor,
-            colors[firstColorIndex]
+            definition.aiPrimarySourceColor,
+            paintColors[0]
         )
 
-        if (activeRaceDefinition.aiSecondarySourceColor != 0) {
+        if (definition.aiSecondarySourceColor != 0) {
             racerImage.replace(
-                activeRaceDefinition.aiSecondarySourceColor,
-                colors[secondColorIndex]
+                definition.aiSecondarySourceColor,
+                paintColors[1]
             )
         }
 
@@ -76,6 +94,10 @@ function createAIRacerImages(racerIndex: number) {
     }
 
     return racerImages
+}
+
+function createAIRacerImages(racerIndex: number) {
+    return createAIRacerImagesForDifficulty(selectedRace, racerIndex)
 }
 
 /** Selects an opponent's directional image from its strongest velocity axis. */
@@ -97,11 +119,19 @@ function updateAIRacerImage(racer: Sprite) {
 
 /** Creates and initializes every opponent for the active race definition. */
 function createAIRacers() {
+    let startingDirection = raceStartDirection(selectedRaceLayout)
+    let reverseGrid = selectedRaceLayout == RaceLayout.Reverse
+    let startingColumn = reverseGrid ?
+        activeRaceDefinition.playerStartColumn +
+            (activeRaceDefinition.playerStartColumn -
+                activeRaceDefinition.aiStartColumn) :
+        activeRaceDefinition.aiStartColumn
+
     for (let index = 0; index < activeRaceDefinition.aiCount; index++) {
         let racerImages = createAIRacerImages(index)
         let profile = aiRacerProfile(index)
         let racer = sprites.create(
-            racerImages[CarImageDirection.Right],
+            racerImages[startingDirection],
             SpriteKind.AIRacer
         )
 
@@ -119,11 +149,12 @@ function createAIRacers() {
         racer.data.finishPlace = 0
         racer.data.lastGateTime = control.millis()
         racer.data.images = racerImages
-        racer.data.imageDirection = CarImageDirection.Right
+        racer.data.imageDirection = startingDirection
 
         // Stagger opponents behind and across the starting lane.
         racer.x =
-            (activeRaceDefinition.aiStartColumn - index % 2 * 2) * 16 + 8
+            (startingColumn + (reverseGrid ? 1 : -1) *
+                (index % 2) * 2) * 16 + 8
         racer.y =
             (activeRaceDefinition.aiStartRow + index % 2) * 16 + 8
         racer.z = player.z
@@ -230,7 +261,7 @@ function updateAIRacer(racer: Sprite, deltaTime: number) {
 /** Resets and starts the AI subsystem for the active race. */
 function startAIRaceSystems() {
     stopAIRaceSystems()
-    activeAICheckpoints = activeRaceDefinition.aiCheckpoints
+    activeAICheckpoints = activeRaceCheckpoints
 
     // Validate authored route data once instead of checking every racer frame.
     if (activeAICheckpoints.length == 0) {
