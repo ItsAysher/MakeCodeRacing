@@ -74,6 +74,14 @@ function useBlinkAbility() {
         freeRoamTileSize / 2
     let destinationY = destinationTileY * freeRoamTileSize +
         freeRoamTileSize / 2
+
+    showBlinkAfterimages(
+        player.x,
+        player.y,
+        destinationX,
+        destinationY
+    )
+
     player.setPosition(destinationX, destinationY)
     if (playerCarVisual) {
         playerCarVisual.setPosition(destinationX, destinationY)
@@ -82,12 +90,6 @@ function useBlinkAbility() {
     blinkAbilityReadyAt = game.runtime() +
         blinkAbilityCooldownMilliseconds
     shakeRacingCamera(2, 120)
-    showBlinkAfterimages(
-        startTileX * freeRoamTileSize + freeRoamTileSize / 2,
-        startTileY * freeRoamTileSize + freeRoamTileSize / 2,
-        destinationX,
-        destinationY
-    )
 }
 
 function tryUseBlinkAbility() {

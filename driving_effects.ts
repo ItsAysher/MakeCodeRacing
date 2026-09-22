@@ -46,25 +46,33 @@ function showBlinkAfterimages(
     destinationX: number,
     destinationY: number
 ) {
-    if (!playerCarVisual) {
+    if (!playerCarVisual || !drivingEffectsHaveCapacity()) {
         return
     }
 
-    for (let step = 0; step < 4; step++) {
-        let afterimage = playerCarVisual.image.clone()
-        for (let x = 0; x < afterimage.width; x++) {
-            for (let y = 0; y < afterimage.height; y++) {
-                if (afterimage.getPixel(x, y) != 0) {
-                    afterimage.setPixel(x, y, step % 2 == 0 ? 9 : 11)
-                }
-            }
-        }
-        let progress = step / 3
+    // Cover the actual travelled path, including both endpoints. Under load,
+    // spread fewer echoes over that same path rather than truncating its end.
+    let count = Math.min(
+        1 + Math.ceil(Math.max(Math.abs(destinationX - startX),
+            Math.abs(destinationY - startY)) / freeRoamTileSize),
+        maximumDrivingEffectSprites - sprites.allOfKind(SpriteKind.DrivingEffect).length
+    )
+    if (count < 2) {
+        return
+    }
+    let afterimage = playerCarVisual.image.clone()
+    for (let color = 1; color < 16; color++) {
+        afterimage.replace(color, 9)
+    }
+    let alternateImage = afterimage.clone()
+    alternateImage.replace(9, 11)
+    for (let step = 0; step < count; step++) {
+        let progress = step / (count - 1)
         createDrivingEffect(
-            afterimage,
+            step % 2 == 0 ? afterimage : alternateImage,
             startX + (destinationX - startX) * progress,
             startY + (destinationY - startY) * progress,
-            180 + step * 55,
+            250 + step * 55,
             player.z
         )
     }

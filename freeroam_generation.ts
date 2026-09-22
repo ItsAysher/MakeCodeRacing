@@ -192,6 +192,11 @@ function moveFreeRoamPlayerToRebasedPosition(
     let pixelShiftX = nextPlayerX - player.x
     let pixelShiftY = nextPlayerY - player.y
     player.setPosition(nextPlayerX, nextPlayerY)
+    // Blink can cross a streaming boundary in one jump. Keep its world-space
+    // trail (and other driving effects) aligned with the restamped road.
+    for (let effect of sprites.allOfKind(SpriteKind.DrivingEffect)) {
+        effect.setPosition(effect.x + pixelShiftX, effect.y + pixelShiftY)
+    }
 
     // Rendering synchronization occurs earlier in the frame, so move the
     // visible half immediately to avoid a one-frame split.

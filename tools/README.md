@@ -1,5 +1,16 @@
 # Release validation tools
 
+Blink's path effects have a focused logic regression suite:
+
+```powershell
+node tools/test-blink-effects.mjs
+```
+
+Using the cached MakeCode compiler, it checks the production Blink, effect, and
+streaming routines for exact start/end coverage, four directions, wall/boundary
+limits, cooldowns, world rebasing, untouched car art, disabled FX, and bounded
+sprite usage. This does not replace an in-simulator visual check.
+
 Run the repository-owned checks from PowerShell:
 
 ```powershell
