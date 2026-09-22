@@ -38,7 +38,7 @@ function confirmRaceDifficulty(difficulty: RaceDifficulty) {
                     ) +
                 "\nBest: " + raceRecordValue(record) +
                     " [" + raceMedalShortForTime(difficulty, record) + "]" +
-                "\n\nGold: " + formatRaceTime(
+                "\nGold: " + formatRaceTime(
                     raceGoldTargetMilliseconds[difficulty]
                 ) +
                 "\nSilver: " + formatRaceTime(

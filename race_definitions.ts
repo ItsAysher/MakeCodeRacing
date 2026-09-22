@@ -127,6 +127,24 @@ let expertRaceDefinition: RaceDefinition = {
     ]
 }
 
+// Road-wide corner regions for player validation, in forward AI-gate order.
+// Inclusive tile bounds: left, top, right, bottom. Unlike the AI's racing
+// line, these include every legal inside/outside line through Expert's bends.
+// Keep one region per AI checkpoint so live placement retains the same units.
+let expertRaceGateBounds = [
+    [61, 44, 66, 47], [61, 35, 66, 39],
+    [50, 35, 55, 39], [50, 26, 55, 30],
+    [64, 26, 67, 30], [64, 3, 67, 6],
+    [52, 3, 56, 6], [52, 14, 56, 19],
+    [43, 14, 47, 19], [43, 3, 47, 5],
+    [26, 3, 32, 5], [30, 9, 36, 13],
+    [25, 15, 35, 19], [15, 4, 22, 8],
+    [2, 4, 5, 8], [2, 11, 8, 16],
+    [21, 27, 26, 32], [22, 35, 26, 40],
+    [12, 35, 21, 40], [9, 27, 13, 31],
+    [3, 27, 6, 30], [3, 44, 6, 47]
+]
+
 let selectedRace = RaceDifficulty.Beginner
 let selectedRaceLayout = RaceLayout.Forward
 

@@ -60,10 +60,10 @@ function showCareerProgress() {
     game.showLongText(
         "CAREER " + completionPercent + "%" +
         "\n" + nextUnlock +
-        "\n\nParts: " + ownedParts + "/12" +
+        "\nParts: " + ownedParts + "/12" +
         "\nPaints: " + ownedPaints + "/15" +
         "\nRace records: " + records + "/3" +
-        "\n\nForest rivals: " + forestCompleted + "/3" +
+        "\nForest rivals: " + forestCompleted + "/3" +
         "\nHighway trials: " + highwayCompleted + "/3" +
         "\nCave statues: " + caveCompleted + "/3" +
         "\nAbilities: " + abilities + "/3",

@@ -17,6 +17,7 @@ import path from "node:path"
 import process from "node:process"
 import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { runRacePauseChecks } from "./smoke-race-pause.mjs"
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url)
 const TOOLS_DIRECTORY = path.dirname(SCRIPT_PATH)
@@ -85,7 +86,13 @@ async function run() {
     console.log(`Simulator: ${serverUrl}`)
     console.log(`Artifacts: ${temporaryArtifacts}`)
 
-    makeCodeProcess = startMakeCode(makeCode, serverPort)
+    // `serve --no-watch` serves an existing binary; it does not rebuild it.
+    // Always compile first so lifecycle assertions test the current sources.
+    makeCodeProcess = startMakeCode(makeCode, ["build", "--java-script", "--always-built"])
+    await waitUntil(async () => makeCodeProcess.exitCode !== null,
+        options.startupTimeout, "MakeCode JavaScript build did not finish")
+    assert.equal(makeCodeProcess.exitCode, 0, "MakeCode JavaScript build failed")
+    makeCodeProcess = startMakeCode(makeCode, ["serve", "--no-watch", "--port", String(serverPort)])
     await waitForHttp(serverUrl, options.startupTimeout, "MakeCode simulator")
 
     browserProcess = startBrowser(browser, debugPort, temporaryProfile, serverUrl)
@@ -188,6 +195,17 @@ async function run() {
         throw new Error(`Browser reported errors:\n${browserErrors.join("\n")}`)
     }
 
+    if (!options.updateBaseline) compareBaseline(actual)
+
+    await runRacePauseChecks({
+        evaluate, pressController, waitUntil, sleep,
+        captureCanvas, waitForStableCanvas,
+        expectedScreens: actual,
+        artifacts: temporaryArtifacts, timeout: options.transitionTimeout
+    })
+    assert.equal(browserErrors.length, 0, `Browser reported errors: ${browserErrors.join("\n")}`)
+
+    // Never accept new screenshots from a run that failed lifecycle checks.
     if (options.updateBaseline) {
         const baseline = {
             schemaVersion: 1,
@@ -198,12 +216,10 @@ async function run() {
         }
         fs.writeFileSync(BASELINE_PATH, `${JSON.stringify(baseline, null, 2)}\n`)
         console.log(`Updated visual baseline: ${BASELINE_PATH}`)
-    } else {
-        compareBaseline(actual)
     }
 
     console.log(`\nPASS: ${CHECKPOINTS.length} controller-driven simulator checkpoints verified.`)
-    console.log("Route: new game -> Garage -> More -> Settings -> Accessibility -> Back -> Drive -> Races -> Beginner -> Reverse -> Start Race")
+    console.log("Route: new game -> Garage -> Settings -> Drive -> Reverse Race -> grid pause -> live pause -> restart -> Garage")
 
     if (!options.keepArtifacts && !options.artifacts) {
         fs.rmSync(temporaryArtifacts, { recursive: true, force: true })
@@ -279,7 +295,7 @@ function printHelp() {
     console.log(`Usage: node tools/smoke-simulator.mjs [options]
 
 Runs a clean-profile, controller-driven MakeCode Arcade simulator smoke test.
-No package installation or network download is performed.
+Uses the installed toolchain; MakeCode may refresh its compiler cache.
 
 Options:
   --update-baseline          Replace the checked-in canvas pixel baselines
@@ -297,8 +313,9 @@ Environment:
 
 The simulator canvas has no accessible text tree. Semantic labels and ordering
 are guarded in source, while runtime screens are asserted using exact 160x120
-RGBA pixel hashes and saved as PNGs. Intentional visual changes require one
-reviewed run with --update-baseline.`)
+RGBA pixel hashes and saved as PNGs (only the intro's animated A prompt is
+masked). Pause/restart checks read simulator state without mutating it.
+Intentional visual changes require one reviewed run with --update-baseline.`)
 }
 
 function assertSourceMenuContracts() {
@@ -446,10 +463,10 @@ function findBrowser() {
     return browser
 }
 
-function startMakeCode(makeCode, port) {
+function startMakeCode(makeCode, arguments_) {
     const child = spawn(
         makeCode.command,
-        [...makeCode.prefixArguments, "serve", "--no-watch", "--port", String(port)],
+        [...makeCode.prefixArguments, ...arguments_],
         {
             cwd: PROJECT_ROOT,
             env: { ...process.env, NO_COLOR: "1" },
@@ -584,10 +601,11 @@ async function chooseMenuIndex(index) {
     await pressController("A")
 }
 
-async function pressController(button) {
+async function pressController(button, holdMilliseconds = 70) {
     const keys = {
         A: { key: "z", code: "KeyZ", keyCode: 90 },
         B: { key: "x", code: "KeyX", keyCode: 88 },
+        Menu: { key: "`", code: "Backquote", keyCode: 192 },
         Up: { key: "ArrowUp", code: "ArrowUp", keyCode: 38 },
         Down: { key: "ArrowDown", code: "ArrowDown", keyCode: 40 },
         Left: { key: "ArrowLeft", code: "ArrowLeft", keyCode: 37 },
@@ -608,7 +626,7 @@ async function pressController(button) {
         windowsVirtualKeyCode: selected.keyCode,
         nativeVirtualKeyCode: selected.keyCode
     })
-    await sleep(70)
+    await sleep(holdMilliseconds)
     await cdp.call("Input.dispatchKeyEvent", {
         type: "keyUp",
         key: selected.key,
@@ -621,7 +639,10 @@ async function pressController(button) {
 
 async function checkpoint(name, actual, differentFrom) {
     assert.ok(CHECKPOINTS.includes(name), `Unknown checkpoint: ${name}`)
-    const capture = await waitForStableCanvas(differentFrom)
+    // Arcade bobs the splash's A prompt. Exclude only that tiny animated
+    // region from its hash; keep the actual PNG and all other pixels intact.
+    const ignoredRegion = name === "race-intro" ? { x: 144, y: 64, width: 16, height: 20 } : undefined
+    const capture = await waitForStableCanvas(differentFrom, ignoredRegion)
     const fileName = `${String(CHECKPOINTS.indexOf(name) + 1).padStart(2, "0")}-${name}.png`
     fs.writeFileSync(path.join(temporaryArtifacts, fileName), capture.png)
     actual[name] = {
@@ -634,14 +655,14 @@ async function checkpoint(name, actual, differentFrom) {
     return capture
 }
 
-async function waitForStableCanvas(differentFrom) {
+async function waitForStableCanvas(differentFrom, ignoredRegion) {
     let previousHash
     let stableCount = 0
     let candidate
     const deadline = Date.now() + options.transitionTimeout
 
     while (Date.now() < deadline) {
-        candidate = await captureCanvas()
+        candidate = await captureCanvas(ignoredRegion)
         if (candidate.hash === previousHash) {
             stableCount += 1
         } else {
@@ -670,7 +691,7 @@ async function waitForCanvasHash(expectedHash) {
     }, options.transitionTimeout, `Canvas did not return to expected state ${expectedHash}`)
 }
 
-async function captureCanvas() {
+async function captureCanvas(ignoredRegion) {
     const value = await evaluate(`(() => {
         const frame = document.querySelector("#simframe")
         const canvas = frame && frame.contentDocument &&
@@ -697,6 +718,12 @@ async function captureCanvas() {
     const colors = new Set()
     for (let index = 0; index < rgba.length; index += 4) {
         colors.add(rgba.readUInt32BE(index))
+    }
+    if (ignoredRegion) {
+        for (let y = ignoredRegion.y; y < ignoredRegion.y + ignoredRegion.height; y++) {
+            rgba.fill(0, (y * value.width + ignoredRegion.x) * 4,
+                (y * value.width + ignoredRegion.x + ignoredRegion.width) * 4)
+        }
     }
     return {
         hash: crypto.createHash("sha256").update(rgba).digest("hex"),

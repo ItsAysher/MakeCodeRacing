@@ -967,9 +967,11 @@ function openRacePauseMenu() {
         // The countdown is an independent fiber, so invalidate it before the
         // scene switch. Resume begins a fresh 3-2-1 sequence on the race scene.
         raceSessionId += 1
-        clearRaceCountdownDisplay()
     }
 
+    // GO's fiber can finish while this menu is open too. Destroy its sprite
+    // on the owning race scene, before pushScene changes destroy's target.
+    clearRaceCountdownDisplay()
     game.pushScene()
     bindRacePauseMenuControls()
     drawRacePauseOptions()

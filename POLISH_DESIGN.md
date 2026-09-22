@@ -87,6 +87,11 @@ The implementation remains appropriate for the constraints documented by
 24. **Controller-driven simulator regression test** — create a clean profile
     and verify 16 canvas states across Garage pagination, Settings,
     Accessibility, Back navigation, Drive, layout selection, and race launch.
+25. **Race pause/restart lifecycle regression coverage** — drive grid and live
+    pause, verify frozen clocks/player/rivals, navigate pause submenus, cancel
+    or confirm restart/exit, and verify fresh grids plus Garage cleanup. Includes
+    a fix for the GO banner surviving a scene switch when paused immediately
+    after the countdown. Tests add no runtime code or extension dependencies.
 
 ## Player-Experience Impact
 
@@ -171,8 +176,8 @@ polish release:
 5. Full illustrated rival portraits beyond the compact native paint/name cards.
 6. Translation of player-facing copy; dynamic fixed-width text is now safe,
    but the English source strings still need localization.
-7. Extend the controller-driven smoke suite beyond its 16 menu/launch checkpoints to
-   pause, restart, finish, timeout, wreck, championship, reverse routes, and
-   save migration.
+7. Extend the controller-driven smoke suite to finish, timeout, wreck,
+   championship, full reverse-route completion, and save migration. Grid/live
+   pause, restart/cancel, pause submenus, and Garage exit are now covered.
 8. Release packaging: version tag, playable share link, screenshots/GIF, and a
    short hardware-support note for players.

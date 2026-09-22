@@ -29,11 +29,6 @@ let playerRaceWrongWayMilliseconds = 0
 let playerRaceWrongWay = false
 let playerRaceInvalidFinishWarningAt = 0
 
-let cachedRaceRouteSegmentStarts: number[] = []
-let cachedRaceRouteSegmentLengths: number[] = []
-let cachedRaceRouteTotalLength = 0
-let cachedRaceFinishRouteOffset = 0
-
 // Medal targets turn each circuit into a replayable mastery goal. Bronze is
 // awarded for any classified finish; silver and gold require these times.
 let raceSilverTargetMilliseconds = [33000, 80000, 180000]
@@ -88,40 +83,13 @@ function raceMedalShortForTime(raceIndex: number, milliseconds: number) {
     return medal.length > 0 ? medal.charAt(0) : "-"
 }
 
-/** Caches loop segment lengths once per authored race. */
+/** Resets ordered route validation for a new race or restart. */
 function prepareRaceRouteProgress() {
-    cachedRaceRouteSegmentStarts = []
-    cachedRaceRouteSegmentLengths = []
-    cachedRaceRouteTotalLength = 0
-    cachedRaceFinishRouteOffset = 0
     playerRaceRouteGateIndex = 0
     playerRaceRouteGatesPassed = 0
     playerRaceWrongWayMilliseconds = 0
     playerRaceWrongWay = false
     playerRaceInvalidFinishWarningAt = 0
-
-    if (!activeRaceDefinition || activeRaceCheckpoints.length < 2) {
-        return
-    }
-
-    let route = activeRaceCheckpoints
-    for (let index = 0; index < route.length; index++) {
-        let nextIndex = (index + 1) % route.length
-        let dx = (route[nextIndex][0] - route[index][0]) * 16
-        let dy = (route[nextIndex][1] - route[index][1]) * 16
-        let length = Math.sqrt(dx * dx + dy * dy)
-        cachedRaceRouteSegmentStarts.push(cachedRaceRouteTotalLength)
-        cachedRaceRouteSegmentLengths.push(length)
-        cachedRaceRouteTotalLength += length
-    }
-
-    let finishTiles = tiles.getTilesByType(assets.tile`raceFinishTile`)
-    if (finishTiles.length > 0) {
-        cachedRaceFinishRouteOffset = rawRaceRouteProgressAt(
-            finishTiles[0].x,
-            finishTiles[0].y
-        )
-    }
 }
 
 /** True only after every authored route gate for the current lap was passed. */
@@ -151,7 +119,7 @@ function raceRouteGatePixelY(gateIndex: number) {
     return activeRaceCheckpoints[gateIndex][1] * 16 + 8
 }
 
-/** Advances generous invisible progress gates and diagnoses sustained wrong-way driving. */
+/** Advances ordered road gates and diagnoses sustained wrong-way driving. */
 function updatePlayerRaceRouteProgress(deltaTime: number) {
     if (drivingSessionState != DrivingSessionState.Race || !player ||
         !activeRaceDefinition || activeRaceCheckpoints.length == 0) {
@@ -160,10 +128,27 @@ function updatePlayerRaceRouteProgress(deltaTime: number) {
 
     let targetX = raceRouteGatePixelX(playerRaceRouteGateIndex)
     let targetY = raceRouteGatePixelY(playerRaceRouteGateIndex)
+    let gateRadius = 40
+    let expertRoute = activeRaceDefinition == expertRaceDefinition
+    if (expertRoute) {
+        let authoredIndex = selectedRaceLayout == RaceLayout.Reverse ?
+            activeRaceCheckpoints.length - 1 - playerRaceRouteGateIndex :
+            playerRaceRouteGateIndex
+        let bounds = expertRaceGateBounds[authoredIndex]
+        // Aim at the nearest point of the whole corner, not the AI apex.
+        // Include subpixels up to the last Fx8 coordinate inside the tile.
+        targetX = Math.max(bounds[0] * 16,
+            Math.min(bounds[2] * 16 + 16 - 1 / 256, player.x))
+        targetY = Math.max(bounds[1] * 16,
+            Math.min(bounds[3] * 16 + 16 - 1 / 256, player.y))
+        gateRadius = 0
+    }
     let offsetX = targetX - player.x
     let offsetY = targetY - player.y
     let distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY)
-    if (distance <= 40) {
+    if (distance <= gateRadius && (!expertRoute ||
+        tiles.tileAtLocationEquals(player.tilemapLocation(),
+            assets.tile`raceRoadTile`))) {
         playerRaceRouteGatesPassed += 1
         playerRaceRouteGateIndex = (playerRaceRouteGateIndex + 1) %
             activeRaceCheckpoints.length
@@ -174,7 +159,10 @@ function updatePlayerRaceRouteProgress(deltaTime: number) {
 
     let speed = Math.sqrt(player.vx * player.vx + player.vy * player.vy)
     let travelTowardGate = player.vx * offsetX + player.vy * offsetY
-    if (speed > 24 && travelTowardGate < 0) {
+    // Expert's wide corners allow lateral corrections; require a clear
+    // retreat (over 120 degrees away) before accumulating WRONG WAY.
+    let wrongWayThreshold = expertRoute ? -0.5 * speed * distance : 0
+    if (speed > 24 && travelTowardGate < wrongWayThreshold) {
         playerRaceWrongWayMilliseconds += deltaTime * 1000
     } else {
         playerRaceWrongWayMilliseconds = Math.max(
@@ -210,74 +198,6 @@ function routeGateFraction(
         ((racer.x - startX) * dx + (racer.y - startY) * dy) /
             lengthSquared
     ))
-}
-
-/** Finds the closest projected point on the authored AI route. */
-function rawRaceRouteProgressAt(x: number, y: number) {
-    if (!activeRaceDefinition || cachedRaceRouteTotalLength <= 0) {
-        return 0
-    }
-
-    let route = activeRaceCheckpoints
-    let bestDistanceSquared = 1000000000
-    let bestProgress = 0
-
-    for (let index = 0; index < route.length; index++) {
-        let nextIndex = (index + 1) % route.length
-        let startX = route[index][0] * 16 + 8
-        let startY = route[index][1] * 16 + 8
-        let endX = route[nextIndex][0] * 16 + 8
-        let endY = route[nextIndex][1] * 16 + 8
-        let dx = endX - startX
-        let dy = endY - startY
-        let lengthSquared = dx * dx + dy * dy
-        let projection = 0
-        if (lengthSquared > 0) {
-            projection = ((x - startX) * dx + (y - startY) * dy) /
-                lengthSquared
-            projection = Math.max(0, Math.min(1, projection))
-        }
-
-        let closestX = startX + dx * projection
-        let closestY = startY + dy * projection
-        let offsetX = x - closestX
-        let offsetY = y - closestY
-        let distanceSquared = offsetX * offsetX + offsetY * offsetY
-        if (distanceSquared < bestDistanceSquared) {
-            bestDistanceSquared = distanceSquared
-            bestProgress = cachedRaceRouteSegmentStarts[index] +
-                cachedRaceRouteSegmentLengths[index] * projection
-        }
-    }
-    return bestProgress
-}
-
-function adjustedRaceRouteProgress(
-    racer: Sprite,
-    completedLaps: number,
-    checkpointWasArmed: boolean
-) {
-    if (!racer || cachedRaceRouteTotalLength <= 0) {
-        return completedLaps * cachedRaceRouteTotalLength
-    }
-
-    let routeProgress = rawRaceRouteProgressAt(racer.x, racer.y) -
-        cachedRaceFinishRouteOffset
-    while (routeProgress < 0) {
-        routeProgress += cachedRaceRouteTotalLength
-    }
-    while (routeProgress >= cachedRaceRouteTotalLength) {
-        routeProgress -= cachedRaceRouteTotalLength
-    }
-
-    // Starting-grid cars are immediately behind the finish line. Until they
-    // reach the checkpoint, keep that wrapped coordinate behind zero rather
-    // than incorrectly treating it as almost one full lap complete.
-    if (!checkpointWasArmed && completedLaps == 0 &&
-        routeProgress > cachedRaceRouteTotalLength * 0.72) {
-        routeProgress -= cachedRaceRouteTotalLength
-    }
-    return completedLaps * cachedRaceRouteTotalLength + routeProgress
 }
 
 /** Returns the player's live place among every active circuit racer. */
@@ -499,7 +419,7 @@ function showRaceRecords() {
     let recordText = "PERSONAL RECORDS"
     for (let layoutIndex = 0; layoutIndex < 2; layoutIndex++) {
         let layout = layoutIndex as RaceLayout
-        recordText += "\n\n== " + raceLayoutLabel(layout) + " =="
+        recordText += "\n== " + raceLayoutLabel(layout) + " =="
         for (let difficultyIndex = 0;
             difficultyIndex < 3;
             difficultyIndex++) {
@@ -507,7 +427,7 @@ function showRaceRecords() {
                 difficultyIndex as RaceDifficulty,
                 layout
             )
-            recordText += "\n\n" + names[difficultyIndex] +
+            recordText += "\n" + names[difficultyIndex] +
                 " [" + raceMedalShortForTime(
                     difficultyIndex,
                     bestRaceTimeMilliseconds[recordIndex]

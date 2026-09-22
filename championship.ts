@@ -196,8 +196,8 @@ function advanceChampionshipSeries() {
             3
         ) +
         (wonSeries ?
-            "\n\nChampion bonus: $" + championshipWinnerBonus :
-            "\n\nReplay the series from the Garage."),
+            "\nChampion bonus: $" + championshipWinnerBonus :
+            "\nReplay the series from the Garage."),
         DialogLayout.Full
     )
     if (wonSeries) {
@@ -212,10 +212,10 @@ function showChampionshipBriefing() {
     game.showLongText(
         "THREE-CIRCUIT CHAMPIONSHIP" +
         "\nBeginner > Intermediate > Expert" +
-        "\n\nPoints: 10 / 7 / 5 / 3 / 1" +
+        "\nPoints: 10 / 7 / 5 / 3 / 1" +
         "\nDNF: 0 | Points ties favor the field" +
         "\nChampion bonus: $" + championshipWinnerBonus +
-        "\n\nNo rematches between rounds.",
+        "\nNo rematches between rounds.",
         DialogLayout.Full
     )
     story.showPlayerChoices("Start Series", "Back")

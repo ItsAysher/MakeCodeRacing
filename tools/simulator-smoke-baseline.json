@@ -84,19 +84,19 @@
       "colors": 7
     },
     "race-field-card": {
-      "sha256": "0fbbd746d8b0cd279bf0f4d686cafac8ff06cde68f9718f4d7f7d9f201b18c2e",
+      "sha256": "60058050062af594a98eac9ddec2b6e955d53aa45178823c1ac252cebd0e8f72",
       "width": 160,
       "height": 120,
-      "colors": 9
+      "colors": 8
     },
     "race-reverse-card": {
-      "sha256": "7b6fd3464040ce550f8e0c78631887dd926894e98f0505bdcafcf6072df3f4ac",
+      "sha256": "e838b0378034b0ea915eaf6933ce2aa725218965a4cac41f1d99a697633d8dea",
       "width": 160,
       "height": 120,
-      "colors": 9
+      "colors": 8
     },
     "race-intro": {
-      "sha256": "1837400c4b54691d34fa7d9a15ad706f230cdbf8171b68ddaf75e332b993bced",
+      "sha256": "e6d97e26176c2556526929934c07b190fa202418ed60974df252d45cc1d7f2c6",
       "width": 160,
       "height": 120,
       "colors": 9
